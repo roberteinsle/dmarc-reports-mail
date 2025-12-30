@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - DMARC Reports Mail{% endblock %}
+
+{% block content %}
+<h1>Alert History</h1>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Alerts</h5>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select form-select-sm" onchange="window.location.href='/alerts?severity=' + this.value">
+                    <option value="">All Severities</option>
+                    <option value="low" {{ 'selected' if severity_filter == 'low' else '' }}>Low</option>
+                    <option value="medium" {{ 'selected' if severity_filter == 'medium' else '' }}>Medium</option>
+                    <option value="high" {{ 'selected' if severity_filter == 'high' else '' }}>High</option>
+                    <option value="critical" {{ 'selected' if severity_filter == 'critical' else '' }}>Critical</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Title</th>
+                    <th>Email Sent</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in pagination.items %}
+                <tr>
+                    <td>{{ alert.id }}</td>
+                    <td>{{ alert.alert_type }}</td>
+                    <td><span class="badge severity-{{ alert.severity }}">{{ alert.severity }}</span></td>
+                    <td>{{ alert.title }}</td>
+                    <td>{{ 'Yes' if alert.email_sent else 'No' }}</td>
+                    <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if alert.report_id %}
+                        <a href="/reports/{{ alert.report_id }}" class="btn btn-sm btn-primary">View Report</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                {% if pagination.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Previous</a></li>
+                {% endif %}
+
+                {% for page in pagination.iter_pages() %}
+                    {% if page %}
+                        <li class="page-item {{ 'active' if page == pagination.page else '' }}">
+                            <a class="page-link" href="?page={{ page }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

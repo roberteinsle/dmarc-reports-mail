@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - DMARC Reports Mail{% endblock %}
+
+{% block content %}
+<h1>DMARC Reports</h1>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Domain</th>
+                    <th>Reporter</th>
+                    <th>Report ID</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in pagination.items %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.domain }}</td>
+                    <td>{{ report.org_name }}</td>
+                    <td><small>{{ report.report_id[:20] }}...</small></td>
+                    <td><span class="badge bg-{{ 'success' if report.status == 'processed' else 'warning' }}">{{ report.status }}</span></td>
+                    <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td><a href="/reports/{{ report.id }}" class="btn btn-sm btn-primary">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                {% if pagination.has_prev %}
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}">Previous</a></li>
+                {% endif %}
+
+                {% for page in pagination.iter_pages() %}
+                    {% if page %}
+                        <li class="page-item {{ 'active' if page == pagination.page else '' }}">
+                            <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

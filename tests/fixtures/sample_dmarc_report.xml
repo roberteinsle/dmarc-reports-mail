@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feedback>
+  <report_metadata>
+    <org_name>google.com</org_name>
+    <email>noreply-dmarc-support@google.com</email>
+    <report_id>12345678901234567890</report_id>
+    <date_range>
+      <begin>1703980800</begin>
+      <end>1704067199</end>
+    </date_range>
+  </report_metadata>
+  <policy_published>
+    <domain>einsle.cloud</domain>
+    <adkim>r</adkim>
+    <aspf>r</aspf>
+    <p>none</p>
+    <sp>none</sp>
+    <pct>100</pct>
+  </policy_published>
+  <record>
+    <row>
+      <source_ip>209.85.220.41</source_ip>
+      <count>2</count>
+      <policy_evaluated>
+        <disposition>none</disposition>
+        <dkim>pass</dkim>
+        <spf>pass</spf>
+      </policy_evaluated>
+    </row>
+    <identifiers>
+      <header_from>einsle.cloud</header_from>
+    </identifiers>
+    <auth_results>
+      <dkim>
+        <domain>einsle.cloud</domain>
+        <result>pass</result>
+        <selector>default</selector>
+      </dkim>
+      <spf>
+        <domain>einsle.cloud</domain>
+        <result>pass</result>
+        <scope>mfrom</scope>
+      </spf>
+    </auth_results>
+  </record>
+</feedback>

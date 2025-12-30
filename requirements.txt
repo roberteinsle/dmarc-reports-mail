@@ -1,0 +1,27 @@
+# Flask Web Framework
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+
+# Task Scheduling
+APScheduler==3.10.4
+
+# Claude AI Integration
+anthropic==0.18.0
+
+# Configuration
+python-dotenv==1.0.0
+
+# Email Handling
+email-validator==2.1.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Database Migrations
+alembic==1.13.1
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+freezegun==1.4.0

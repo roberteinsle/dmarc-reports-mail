@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Report Detail - DMARC Reports Mail{% endblock %}
+
+{% block content %}
+<h1>Report Details</h1>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Report Metadata</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Report ID:</dt>
+            <dd class="col-sm-9">{{ report.report_id }}</dd>
+
+            <dt class="col-sm-3">Domain:</dt>
+            <dd class="col-sm-9">{{ report.domain }}</dd>
+
+            <dt class="col-sm-3">Reporter:</dt>
+            <dd class="col-sm-9">{{ report.org_name }} ({{ report.email }})</dd>
+
+            <dt class="col-sm-3">Status:</dt>
+            <dd class="col-sm-9"><span class="badge bg-{{ 'success' if report.status == 'processed' else 'warning' }}">{{ report.status }}</span></dd>
+
+            <dt class="col-sm-3">Created:</dt>
+            <dd class="col-sm-9">{{ report.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+
+            {% if report.processed_at %}
+            <dt class="col-sm-3">Processed:</dt>
+            <dd class="col-sm-9">{{ report.processed_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+            {% endif %}
+        </dl>
+    </div>
+</div>
+
+{% if claude_analysis %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Claude AI Analysis</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Summary:</strong> {{ claude_analysis.summary }}</p>
+
+        {% if claude_analysis.severity %}
+        <p><strong>Severity:</strong> <span class="badge severity-{{ claude_analysis.severity }}">{{ claude_analysis.severity }}</span></p>
+        {% endif %}
+
+        {% if claude_analysis.failures %}
+        <h6>Failures:</h6>
+        <ul>
+            {% for failure in claude_analysis.failures %}
+            <li>{{ failure }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if claude_analysis.recommendations %}
+        <h6>Recommendations:</h6>
+        <ul>
+            {% for rec in claude_analysis.recommendations %}
+            <li>{{ rec }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Authentication Records ({{ records|length }})</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Source IP</th>
+                    <th>Count</th>
+                    <th>SPF</th>
+                    <th>DKIM</th>
+                    <th>Disposition</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.source_ip }}</td>
+                    <td>{{ record.count }}</td>
+                    <td><span class="badge bg-{{ 'success' if record.spf_result == 'pass' else 'danger' }}">{{ record.spf_result }}</span></td>
+                    <td><span class="badge bg-{{ 'success' if record.dkim_result == 'pass' else 'danger' }}">{{ record.dkim_result }}</span></td>
+                    <td>{{ record.disposition }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if alerts %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Related Alerts</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Email Sent</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.alert_type }}</td>
+                    <td><span class="badge severity-{{ alert.severity }}">{{ alert.severity }}</span></td>
+                    <td>{{ 'Yes' if alert.email_sent else 'No' }}</td>
+                    <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="/reports" class="btn btn-secondary">Back to Reports</a>
+</div>
+{% endblock %}
