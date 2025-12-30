@@ -50,6 +50,10 @@ def init_scheduler(app):
     scheduler.start()
     logger.info(f"Scheduler started with {interval_minutes} minute interval")
 
+    # Run immediately on startup
+    logger.info("Running initial DMARC report processing on startup")
+    scheduled_job(app)
+
     return scheduler
 
 
@@ -60,6 +64,26 @@ def stop_scheduler():
         scheduler.shutdown()
         scheduler = None
         logger.info("Scheduler stopped")
+
+
+def trigger_manual_processing(app):
+    """
+    Manually trigger DMARC report processing.
+
+    Args:
+        app: Flask application instance
+
+    Returns:
+        dict: Status of the manual trigger
+    """
+    logger.info("Manual processing triggered via API")
+    try:
+        with app.app_context():
+            scheduled_job(app)
+        return {'status': 'success', 'message': 'Processing started successfully'}
+    except Exception as e:
+        logger.error(f"Manual processing failed: {e}", exc_info=True)
+        return {'status': 'error', 'message': str(e)}
 
 
 def scheduled_job(app):

@@ -140,14 +140,17 @@ All credentials via `.env` file (dev) or Docker ENV vars (prod) - **NEVER hardco
 ### Web Dashboard
 
 **Routes** (`app/routes/dashboard.py`):
-- `/` - Dashboard overview with statistics cards
+- `/` - Dashboard overview with statistics cards and manual trigger button
 - `/reports` - Paginated report list
 - `/reports/<id>` - Detailed report view with Claude analysis
 - `/alerts` - Alert history with severity filtering
 - `/api/stats` - JSON endpoint for chart data
+- `/api/trigger-processing` - POST endpoint to manually trigger report processing
 - `/health` - Health check (200=healthy, 503=unhealthy)
 
 **Templates** use Bootstrap 5 with custom severity color coding.
+
+**Manual Processing**: The scheduler runs automatically every 5 minutes AND immediately on application startup. Users can also manually trigger processing via the "Process Reports Now" button on the dashboard.
 
 ## Common Development Tasks
 

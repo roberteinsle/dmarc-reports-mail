@@ -170,3 +170,15 @@ def health():
 
     status_code = 200 if health_status['status'] == 'healthy' else 503
     return jsonify(health_status), status_code
+
+
+@bp.route('/api/trigger-processing', methods=['POST'])
+def trigger_processing():
+    """Manually trigger DMARC report processing."""
+    from flask import current_app
+    from app.services.scheduler_service import trigger_manual_processing
+
+    result = trigger_manual_processing(current_app._get_current_object())
+    status_code = 200 if result['status'] == 'success' else 500
+
+    return jsonify(result), status_code

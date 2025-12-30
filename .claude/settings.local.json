@@ -3,7 +3,12 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(ssh admin@192.168.178.24:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker compose:*)"
     ]
   }
 }

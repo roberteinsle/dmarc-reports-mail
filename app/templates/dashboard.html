@@ -3,7 +3,12 @@
 {% block title %}Dashboard - DMARC Reports Mail{% endblock %}
 
 {% block content %}
-<h1>DMARC Reports Dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>DMARC Reports Dashboard</h1>
+    <button id="triggerProcessing" class="btn btn-primary">
+        <i class="bi bi-arrow-clockwise"></i> Process Reports Now
+    </button>
+</div>
 
 <div class="row mt-4">
     <div class="col-md-4">
@@ -91,4 +96,35 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('triggerProcessing').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+    fetch('/api/trigger-processing', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('✓ Report processing started successfully!\n\nCheck the logs or refresh the page in a moment to see new reports.');
+            setTimeout(() => location.reload(), 3000);
+        } else {
+            alert('✗ Error: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Process Reports Now';
+        }
+    })
+    .catch(error => {
+        alert('✗ Network error: ' + error);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Process Reports Now';
+    });
+});
+</script>
 {% endblock %}
