@@ -1,55 +1,55 @@
 # DMARC Reports Mail Analyzer
 
-Automatisierte DMARC-Report-Verarbeitung mit Claude AI-Analyse und E-Mail-Benachrichtigungen.
+Automated DMARC report processing with Claude AI analysis and email notifications.
 
 ## Features
 
-- **Automatischer IMAP-Abruf**: Holt DMARC-Reports alle 5 Minuten von IMAP-Server
-- **XML-Parsing**: Verarbeitet Standard-DMARC-Reports (XML, .gz, .zip)
-- **Claude AI-Analyse**: Intelligente Analyse mit Anthropic's Claude API
-- **Alert-System**: E-Mail-Benachrichtigungen bei kritischen Problemen via AWS SES
-- **Web-Dashboard**: Flask-basiertes Dashboard zur Visualisierung
-- **Docker-Ready**: Läuft als Container auf Synology NAS oder anderen Plattformen
-- **SQLite-Datenbank**: Persistente Speicherung aller Reports und Analysen
+- **Automatic IMAP Retrieval**: Fetches DMARC reports every 5 minutes from IMAP server
+- **XML Parsing**: Processes standard DMARC reports (XML, .gz, .zip)
+- **Claude AI Analysis**: Intelligent analysis using Anthropic's Claude API
+- **Alert System**: Email notifications for critical issues via AWS SES
+- **Web Dashboard**: Flask-based dashboard for visualization
+- **Docker-Ready**: Runs as container on Synology NAS or other platforms
+- **SQLite Database**: Persistent storage of all reports and analyses
 
-## Voraussetzungen
+## Prerequisites
 
-- Python 3.11+ (für lokale Entwicklung)
-- Docker & Docker Compose (für Production)
-- IMAP-Zugang für DMARC-Reports
+- Python 3.11+ (for local development)
+- Docker & Docker Compose (for production)
+- IMAP access for DMARC reports
 - Anthropic API Key (Claude AI)
-- AWS SES SMTP-Credentials (für Alert-E-Mails)
+- AWS SES SMTP credentials (for alert emails)
 
 ## Installation
 
-### Lokale Entwicklung
+### Local Development
 
-1. Repository klonen:
+1. Clone repository:
 ```bash
 git clone https://github.com/roberteinsle/dmarc-reports-mail.git
 cd dmarc-reports-mail
 ```
 
-2. Virtuelle Umgebung erstellen:
+2. Create virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# oder
+# or
 venv\Scripts\activate  # Windows
 ```
 
-3. Dependencies installieren:
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. `.env` Datei erstellen:
+4. Create `.env` file:
 ```bash
 cp .env.example .env
-# Bearbeiten Sie .env und tragen Sie Ihre Credentials ein
+# Edit .env and enter your credentials
 ```
 
-5. Datenbank initialisieren:
+5. Initialize database:
 ```bash
 python
 >>> from app import create_app
@@ -60,7 +60,7 @@ python
 >>> exit()
 ```
 
-6. Anwendung starten:
+6. Start application:
 ```bash
 python run.py
 ```
@@ -69,53 +69,53 @@ Dashboard: http://localhost:5000
 
 ### Docker Deployment (Production)
 
-1. Repository klonen:
+1. Clone repository:
 ```bash
 git clone https://github.com/roberteinsle/dmarc-reports-mail.git
 cd dmarc-reports-mail
 ```
 
-2. `.env` Datei erstellen:
+2. Create `.env` file:
 ```bash
 cp .env.example .env
-# WICHTIG: Tragen Sie ALLE echten Credentials ein!
+# IMPORTANT: Enter ALL real credentials!
 ```
 
-3. Docker Container bauen und starten:
+3. Build and start Docker container:
 ```bash
 docker-compose build
 docker-compose up -d
 ```
 
-4. Logs prüfen:
+4. Check logs:
 ```bash
 docker-compose logs -f
 ```
 
-5. Dashboard öffnen:
+5. Open dashboard:
 ```
-http://<server-ip>:5000
-```
-
-6. Health-Check:
-```
-http://<server-ip>:5000/health
+http://<server-ip>:3551
 ```
 
-### Deployment auf Synology NAS
+6. Health check:
+```
+http://<server-ip>:3551/health
+```
 
-1. SSH-Zugang aktivieren (Systemsteuerung > Terminal & SNMP)
-2. Per SSH verbinden: `ssh admin@<synology-ip>`
-3. Repository in gewünschtes Verzeichnis klonen
-4. `.env` Datei mit echten Credentials erstellen
-5. Docker Compose installieren (falls nicht vorhanden)
-6. Container starten: `docker-compose up -d`
+### Deployment on Synology NAS
 
-## Konfiguration
+1. Enable SSH access (Control Panel > Terminal & SNMP)
+2. Connect via SSH: `ssh admin@<synology-ip>`
+3. Clone repository into desired directory
+4. Create `.env` file with real credentials
+5. Install Docker Compose (if not already installed)
+6. Start container: `docker-compose up -d`
 
-Alle Konfigurationen erfolgen über Umgebungsvariablen in der `.env` Datei:
+## Configuration
 
-### Erforderliche Umgebungsvariablen
+All configuration is done via environment variables in the `.env` file:
+
+### Required Environment Variables
 
 ```env
 # IMAP Configuration
@@ -140,39 +140,39 @@ SCHEDULER_INTERVAL_MINUTES=5
 LOG_LEVEL=INFO
 ```
 
-## Verwendung
+## Usage
 
 ### Dashboard
 
-- **/**  - Übersicht mit Statistiken
-- **/reports** - Liste aller verarbeiteten Reports
-- **/reports/<id>** - Detailansicht eines Reports
-- **/alerts** - Alert-Historie mit Filterung
-- **/health** - Health-Check-Endpoint
+- **/**  - Overview with statistics
+- **/reports** - List of all processed reports
+- **/reports/<id>** - Detail view of a report
+- **/alerts** - Alert history with filtering
+- **/health** - Health check endpoint
 
 ### API Endpoints
 
-- `GET /api/stats` - JSON-Statistiken für Charts
-- `GET /health` - Health-Status (200 = healthy, 503 = unhealthy)
+- `GET /api/stats` - JSON statistics for charts
+- `GET /health` - Health status (200 = healthy, 503 = unhealthy)
 
-### Alert-Kriterien
+### Alert Criteria
 
-Alerts werden automatisch versendet bei:
+Alerts are automatically sent when:
 
-1. **DMARC-Failures**: E-Mails mit disposition = quarantine/reject
-2. **SPF-Failures**: > 5 E-Mails mit SPF fail
-3. **DKIM-Failures**: > 5 E-Mails mit DKIM fail
-4. **Unautorisierte Sender**: Von Claude AI erkannte unbekannte Quellen
-5. **Anomalien**: Von Claude AI erkannte verdächtige Muster
+1. **DMARC Failures**: Emails with disposition = quarantine/reject
+2. **SPF Failures**: > 5 emails with SPF fail
+3. **DKIM Failures**: > 5 emails with DKIM fail
+4. **Unauthorized Senders**: Unknown sources identified by Claude AI
+5. **Anomalies**: Suspicious patterns detected by Claude AI
 
 ## Testing
 
-Tests ausführen:
+Run tests:
 ```bash
 pytest
 ```
 
-Mit Coverage:
+With coverage:
 ```bash
 pytest --cov=app --cov-report=html
 ```
@@ -182,10 +182,10 @@ pytest --cov=app --cov-report=html
 ### Health Check
 
 ```bash
-curl http://localhost:5000/health
+curl http://localhost:3551/health
 ```
 
-Antwort:
+Response:
 ```json
 {
   "status": "healthy",
@@ -197,20 +197,20 @@ Antwort:
 
 ### Logs
 
-Logs befinden sich in `logs/`:
-- `app.log` - Alle Application-Events
-- `error.log` - Nur Errors und Critical
+Logs are located in `logs/`:
+- `app.log` - All application events
+- `error.log` - Only errors and critical
 
 In Docker:
 ```bash
 docker-compose logs -f
 ```
 
-### Datenbank-Backup
+### Database Backup
 
-SQLite-Datenbank befindet sich in Docker Volume `dmarc-data`.
+SQLite database is located in Docker volume `dmarc-data`.
 
-Backup erstellen:
+Create backup:
 ```bash
 docker exec dmarc-analyzer sqlite3 /app/data/dmarc_reports.db ".backup /app/data/backup.db"
 docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
@@ -218,55 +218,55 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 
 ## Troubleshooting
 
-### Problem: Scheduler läuft nicht
+### Problem: Scheduler not running
 
-Lösung: Logs prüfen, evtl. Container neu starten:
+Solution: Check logs, possibly restart container:
 ```bash
 docker-compose restart
 docker-compose logs -f
 ```
 
-### Problem: IMAP-Verbindung schlägt fehl
+### Problem: IMAP connection fails
 
-Lösung:
-- IMAP-Credentials in `.env` prüfen
-- Firewall-Einstellungen prüfen (Port 993)
-- IMAP-Server-Erreichbarkeit testen: `telnet mail.einsle.cloud 993`
+Solution:
+- Check IMAP credentials in `.env`
+- Check firewall settings (port 993)
+- Test IMAP server reachability: `telnet mail.einsle.cloud 993`
 
-### Problem: Claude API-Fehler
+### Problem: Claude API errors
 
-Lösung:
-- API-Key in `.env` prüfen
-- Rate-Limits prüfen (App hat Retry-Logic)
-- Anthropic-Status-Page prüfen
+Solution:
+- Check API key in `.env`
+- Check rate limits (app has retry logic)
+- Check Anthropic status page
 
-### Problem: Keine Alerts erhalten
+### Problem: Not receiving alerts
 
-Lösung:
-- SMTP-Credentials in `.env` prüfen
-- Alert-Kriterien im Code prüfen
-- Alert-Throttling (60 Min) beachten
-- Logs auf SMTP-Fehler prüfen
+Solution:
+- Check SMTP credentials in `.env`
+- Check alert criteria in code
+- Note alert throttling (60 min)
+- Check logs for SMTP errors
 
-## Sicherheitshinweise
+## Security Notes
 
-- **NIEMALS** `.env` Datei committen!
-- **NIEMALS** echte Credentials in Code hardcoden!
-- Regelmäßig Docker Images updaten
-- Starke Passwörter verwenden
-- IMAP/SMTP nur über verschlüsselte Verbindungen (SSL/TLS)
+- **NEVER** commit `.env` file!
+- **NEVER** hardcode real credentials in code!
+- Regularly update Docker images
+- Use strong passwords
+- IMAP/SMTP only over encrypted connections (SSL/TLS)
 
-## Lizenz
+## License
 
-Dieses Projekt ist für den privaten Gebrauch bestimmt.
+This project is intended for private use.
 
 ## Support
 
-Bei Problemen:
-1. Logs prüfen (`docker-compose logs -f`)
-2. Health-Endpoint prüfen (`/health`)
-3. GitHub Issues erstellen: https://github.com/roberteinsle/dmarc-reports-mail/issues
+For issues:
+1. Check logs (`docker-compose logs -f`)
+2. Check health endpoint (`/health`)
+3. Create GitHub issues: https://github.com/roberteinsle/dmarc-reports-mail/issues
 
-## Entwickler
+## Developer
 
 Robert Einsle (robert@einsle.com)
