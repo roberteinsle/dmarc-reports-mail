@@ -88,8 +88,10 @@ class DMARCParserService:
             logger.warning("Missing policy_published section")
             return {}
 
+        domain = policy.findtext('domain', '')
         return {
-            'policy_domain': policy.findtext('domain', ''),
+            'domain': domain,  # Main domain field for database
+            'policy_domain': domain,  # Keep for backwards compatibility
             'policy_adkim': policy.findtext('adkim', ''),
             'policy_aspf': policy.findtext('aspf', ''),
             'policy_p': policy.findtext('p', ''),

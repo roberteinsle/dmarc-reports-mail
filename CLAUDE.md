@@ -31,8 +31,10 @@ pip install -r requirements.txt
 python run.py
 
 # Run tests
-pytest
-pytest --cov=app --cov-report=html
+pytest                                    # Run all tests
+pytest tests/test_parser_service.py       # Run specific test file
+pytest -k test_function_name              # Run specific test
+pytest --cov=app --cov-report=html        # Run with coverage report
 
 # Database migrations
 alembic upgrade head
@@ -254,7 +256,8 @@ except IntegrityError:
 - Data persists in Docker volume `dmarc-data`
 - Logs mapped to `./logs` directory for easy access
 - Health check endpoint `/health` for monitoring
-- Port 5000 exposed (adjust firewall if needed)
+- Port 3551 exposed externally (maps to internal port 5000)
+- Container name: `dmarc-analyzer`
 
 **Environment variables** must be set before first run - app validates on startup and fails fast if missing.
 
