@@ -63,10 +63,12 @@ echo "Testing database connectivity..."
 gosu appuser python -c "
 from app import create_app
 from app.models.database import db
+from sqlalchemy import text
 app = create_app()
 with app.app_context():
     try:
-        db.engine.execute('SELECT 1')
+        with db.engine.connect() as conn:
+            conn.execute(text('SELECT 1'))
         print('Database connection test: SUCCESS')
     except Exception as e:
         print(f'Database connection test: FAILED - {e}')
