@@ -3,6 +3,9 @@ set -e
 
 echo "Starting DMARC Reports Mail application..."
 
+# Ensure data directories exist (in case volumes override them)
+mkdir -p /app/data /app/logs
+
 # Wait a moment for any external services to be ready
 sleep 2
 

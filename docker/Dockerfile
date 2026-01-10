@@ -11,19 +11,20 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Create non-root user for security first
+RUN useradd -m -u 1000 appuser
 
-# Create data and logs directories
-RUN mkdir -p /app/data /app/logs
+# Copy application code and set ownership
+COPY --chown=appuser:appuser . .
+
+# Create data and logs directories with proper ownership
+RUN mkdir -p /app/data /app/logs && \
+    chown -R appuser:appuser /app/data /app/logs && \
+    chmod 755 /app/data /app/logs
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV DATABASE_URL=sqlite:////app/data/dmarc_reports.db
-
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
 
 USER appuser
 

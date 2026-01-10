@@ -12,7 +12,8 @@
       "Bash(source venv/bin/activate)",
       "Bash(pip install:*)",
       "Bash(alembic upgrade:*)",
-      "Bash(python run.py:*)"
+      "Bash(python run.py:*)",
+      "Bash(chmod:*)"
     ]
   }
 }
