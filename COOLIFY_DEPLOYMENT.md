@@ -359,6 +359,22 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 2. **Verify Database**: Ensure volume is properly mounted
 3. **Test Health Endpoint**: `curl https://your-domain/health`
 
+### Database Permission Errors
+
+If you see "unable to open database file" or permission errors:
+
+1. **Root Cause**: Docker volumes in Coolify are often mounted with root ownership
+2. **Solution**: The application automatically fixes this. The Docker container:
+   - Starts as root
+   - Fixes volume permissions for the `appuser` (UID 1000)
+   - Drops to `appuser` before running the application
+3. **Verify**: Check logs for "Fixing volume permissions..." and "Write permissions verified successfully"
+4. **Manual Check**: SSH into container and verify:
+   ```bash
+   docker exec -it dmarc-analyzer ls -la /app/data
+   # Should show: drwxr-xr-x appuser appuser
+   ```
+
 ### IMAP/SMTP Connection Issues
 
 1. **Verify Credentials**: Check environment variables

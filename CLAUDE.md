@@ -199,7 +199,11 @@ Edit `ClaudeService._format_prompt()` in `claude_service.py`. The prompt receive
 ## Security Considerations
 
 1. **Credentials**: Never commit `.env` file. Check `.gitignore` includes `.env`
-2. **Docker Security**: Application runs as non-root user (appuser:1000)
+2. **Docker Security**:
+   - Container starts as root only to fix Docker volume permissions (Coolify requirement)
+   - Uses `gosu` to drop privileges to non-root `appuser` (UID 1000) before running application
+   - Application process runs as `appuser` for security
+   - Entrypoint script fixes `/app/data` and `/app/logs` ownership on startup
 3. **Database**: SQLite with parameterized queries via SQLAlchemy (SQL injection safe)
 4. **Logging**: Never log passwords/API keys. Redact sensitive data in error messages
 5. **IMAP/SMTP**: Always use SSL/TLS (port 993) and STARTTLS (port 587)
@@ -260,6 +264,12 @@ except IntegrityError:
 - Logs mapped to `./logs` directory for easy access
 - Health check endpoint `/health` for monitoring (returns 200 when healthy, 503 when unhealthy)
 - Container name: `dmarc-analyzer`
+
+**Security model**:
+- Container starts as root to fix Docker volume permissions
+- Uses `gosu` to drop to non-root `appuser` (UID 1000) before running application
+- Entrypoint fixes `/app/data` and `/app/logs` ownership on startup (required for Coolify volumes)
+- Application runs as `appuser` for security
 
 **Environment variables** must be set before first run - app validates on startup and fails fast if missing.
 
