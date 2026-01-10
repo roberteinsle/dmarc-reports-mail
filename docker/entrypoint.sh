@@ -11,7 +11,7 @@ mkdir -p /app/data /app/logs
 # Fix permissions for Docker volumes (running as root initially)
 echo "Fixing volume permissions..."
 chown -R appuser:appuser /app/data /app/logs
-chmod -R 755 /app/data /app/logs
+chmod -R 775 /app/data /app/logs
 
 # Display directory information for debugging
 echo "Directory information:"
@@ -28,6 +28,14 @@ gosu appuser touch /app/data/.write_test || {
 gosu appuser rm -f /app/data/.write_test
 echo "Write permissions verified successfully."
 
+# Additional diagnostics for database directory
+echo "Additional filesystem diagnostics:"
+echo "  Mount point: $(df -h /app/data | tail -1)"
+echo "  Directory ownership: $(stat -c '%U:%G' /app/data)"
+echo "  Directory permissions: $(stat -c '%a' /app/data)"
+echo "  Current user running test: $(gosu appuser whoami)"
+echo "  Can create file: $(gosu appuser sh -c 'touch /app/data/.test && echo YES && rm /app/data/.test || echo NO')"
+
 # Wait a moment for any external services to be ready
 sleep 2
 
@@ -38,10 +46,33 @@ gosu appuser alembic upgrade head || echo "No migrations to run or alembic not c
 # Initialize database if it doesn't exist
 if [ ! -f "/app/data/dmarc_reports.db" ]; then
     echo "Database file not found, initializing as appuser..."
+
+    # First, test if SQLite can work at all in this directory
+    echo "Testing SQLite directly..."
+    gosu appuser python3 -c "
+import sqlite3
+import os
+db_path = '/app/data/test.db'
+try:
+    conn = sqlite3.connect(db_path)
+    conn.execute('CREATE TABLE test (id INTEGER)')
+    conn.close()
+    os.remove(db_path)
+    print('  SQLite direct test: SUCCESS')
+except Exception as e:
+    print(f'  SQLite direct test: FAILED - {e}')
+    import traceback
+    traceback.print_exc()
+    exit(1)
+"
+
+    # Now try with Flask-SQLAlchemy
     gosu appuser python -c "from app import create_app; from app.models.database import db; app = create_app(); app.app_context().push(); db.create_all(); print('Database initialized')" || {
         echo "ERROR: Failed to initialize database"
         echo "Checking database directory permissions:"
         ls -la /app/data/
+        echo "Checking DATABASE_URL:"
+        gosu appuser python -c "import os; print(f'DATABASE_URL={os.getenv(\"DATABASE_URL\")}')"
         exit 1
     }
 
