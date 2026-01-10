@@ -8,15 +8,28 @@ services:
     container_name: dmarc-analyzer
     restart: unless-stopped
     ports:
-      - "3551:5000"
+      - "5000:5000"
     volumes:
       - dmarc-data:/app/data
-      - ./logs:/app/logs
-    env_file:
-      - .env
+      - logs:/app/logs
     environment:
-      - FLASK_ENV=production
-      - DATABASE_URL=sqlite:////app/data/dmarc_reports.db
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/dmarc_reports.db}
+      - SECRET_KEY=${SECRET_KEY}
+      - IMAP_HOST=${IMAP_HOST}
+      - IMAP_PORT=${IMAP_PORT:-993}
+      - IMAP_USER=${IMAP_USER}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - IMAP_FOLDER=${IMAP_FOLDER:-INBOX}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - ALERT_RECIPIENT=${ALERT_RECIPIENT}
+      - SCHEDULER_INTERVAL_MINUTES=${SCHEDULER_INTERVAL_MINUTES:-5}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health').raise_for_status()"]
       interval: 30s
@@ -26,4 +39,6 @@ services:
 
 volumes:
   dmarc-data:
+    driver: local
+  logs:
     driver: local

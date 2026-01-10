@@ -9,7 +9,7 @@ Automated DMARC report processing with Claude AI analysis and email notification
 - **Claude AI Analysis**: Intelligent analysis using Anthropic's Claude API
 - **Alert System**: Email notifications for critical issues via AWS SES
 - **Web Dashboard**: Flask-based dashboard for visualization
-- **Docker-Ready**: Runs as container on Synology NAS or other platforms
+- **Docker-Ready**: Runs as container, deployed via Coolify
 - **SQLite Database**: Persistent storage of all reports and analyses
 
 ## Prerequisites
@@ -67,7 +67,57 @@ python run.py
 
 Dashboard: http://localhost:5000
 
-### Docker Deployment (Production)
+### Coolify Deployment (Production)
+
+1. **Add Service in Coolify**:
+   - Go to your Coolify dashboard
+   - Create new service → Docker Compose
+   - Connect your Git repository: `https://github.com/roberteinsle/dmarc-reports-mail.git`
+
+2. **Configure Environment Variables**:
+   Add the following environment variables in Coolify:
+   ```env
+   FLASK_ENV=production
+   SECRET_KEY=<generate-secure-key>
+   DATABASE_URL=sqlite:////app/data/dmarc_reports.db
+
+   # IMAP Configuration
+   IMAP_HOST=<your-imap-host>
+   IMAP_PORT=993
+   IMAP_USER=<your-imap-user>
+   IMAP_PASSWORD=<your-imap-password>
+   IMAP_FOLDER=INBOX
+
+   # Claude API
+   ANTHROPIC_API_KEY=<your-anthropic-api-key>
+
+   # AWS SES SMTP
+   SMTP_HOST=<your-smtp-host>
+   SMTP_PORT=587
+   SMTP_USER=<your-smtp-user>
+   SMTP_PASSWORD=<your-smtp-password>
+   SMTP_FROM=<your-from-email>
+   ALERT_RECIPIENT=<alert-recipient-email>
+
+   # Optional
+   SCHEDULER_INTERVAL_MINUTES=5
+   LOG_LEVEL=INFO
+   ```
+
+3. **Configure Volumes**:
+   - Add persistent volume for `/app/data` (database storage)
+   - Add persistent volume for `/app/logs` (log files)
+
+4. **Deploy**:
+   - Coolify will automatically build and deploy the container
+   - Health check endpoint: `/health`
+   - Coolify handles SSL/TLS termination and domain mapping
+
+5. **Access Dashboard**:
+   - Use the domain/URL provided by Coolify
+   - Health check: `https://<your-domain>/health`
+
+### Local Docker Deployment (Development/Testing)
 
 1. Clone repository:
 ```bash
@@ -78,7 +128,7 @@ cd dmarc-reports-mail
 2. Create `.env` file:
 ```bash
 cp .env.example .env
-# IMPORTANT: Enter ALL real credentials!
+# Edit .env and enter your credentials
 ```
 
 3. Build and start Docker container:
@@ -94,22 +144,13 @@ docker-compose logs -f
 
 5. Open dashboard:
 ```
-http://<server-ip>:3551
+http://localhost:5000
 ```
 
 6. Health check:
 ```
-http://<server-ip>:3551/health
+http://localhost:5000/health
 ```
-
-### Deployment on Synology NAS
-
-1. Enable SSH access (Control Panel > Terminal & SNMP)
-2. Connect via SSH: `ssh admin@<synology-ip>`
-3. Clone repository into desired directory
-4. Create `.env` file with real credentials
-5. Install Docker Compose (if not already installed)
-6. Start container: `docker-compose up -d`
 
 ## Configuration
 
@@ -220,33 +261,40 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 
 ### Problem: Scheduler not running
 
-Solution: Check logs, possibly restart container:
-```bash
-docker-compose restart
-docker-compose logs -f
-```
+Solution:
+- Check logs in Coolify dashboard or via `docker-compose logs -f` (local)
+- Verify all environment variables are set correctly
+- Restart the service
 
 ### Problem: IMAP connection fails
 
 Solution:
-- Check IMAP credentials in `.env`
-- Check firewall settings (port 993)
-- Test IMAP server reachability: `telnet mail.einsle.cloud 993`
+- Check IMAP credentials in environment variables
+- Verify IMAP server connectivity
+- Check logs for specific error messages
 
 ### Problem: Claude API errors
 
 Solution:
-- Check API key in `.env`
-- Check rate limits (app has retry logic)
+- Verify API key in environment variables
+- Check rate limits (app has retry logic with exponential backoff)
 - Check Anthropic status page
 
 ### Problem: Not receiving alerts
 
 Solution:
-- Check SMTP credentials in `.env`
-- Check alert criteria in code
-- Note alert throttling (60 min)
+- Check SMTP credentials in environment variables
+- Verify alert criteria configuration
+- Note alert throttling (60-minute window per alert type)
 - Check logs for SMTP errors
+
+### Problem: Coolify deployment issues
+
+Solution:
+- Verify all required environment variables are set in Coolify
+- Check that persistent volumes are properly configured
+- Review Coolify deployment logs
+- Ensure health check endpoint `/health` is accessible
 
 ## Security Notes
 
@@ -263,7 +311,7 @@ This project is intended for private use.
 ## Support
 
 For issues:
-1. Check logs (`docker-compose logs -f`)
+1. Check logs (Coolify dashboard or `docker-compose logs -f` for local)
 2. Check health endpoint (`/health`)
 3. Create GitHub issues: https://github.com/roberteinsle/dmarc-reports-mail/issues
 

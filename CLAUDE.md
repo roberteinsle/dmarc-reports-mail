@@ -12,7 +12,7 @@ DMARC Reports Mail Analyzer - A Python Flask application that automatically fetc
 - APScheduler for background jobs (5-minute intervals)
 - Anthropic Claude API for intelligent analysis
 - IMAP for email retrieval, AWS SES SMTP for alerts
-- Docker deployment for Synology NAS
+- Docker deployment via Coolify
 
 ## Essential Commands
 
@@ -254,26 +254,32 @@ except IntegrityError:
 
 ## Deployment Notes
 
-**Synology NAS specific**:
-- Use Docker Compose
+**Coolify deployment**:
+- Application runs on port 5000 internally
 - Data persists in Docker volume `dmarc-data`
 - Logs mapped to `./logs` directory for easy access
-- Health check endpoint `/health` for monitoring
-- Port 3551 exposed externally (maps to internal port 5000)
+- Health check endpoint `/health` for monitoring (returns 200 when healthy, 503 when unhealthy)
 - Container name: `dmarc-analyzer`
 
 **Environment variables** must be set before first run - app validates on startup and fails fast if missing.
 
 **Database migrations** run automatically via `entrypoint.sh` on container start.
 
+**Coolify setup**:
+- Add repository as Docker Compose service in Coolify
+- Set required environment variables in Coolify environment settings
+- Coolify will handle port mapping and SSL/TLS termination
+- Use persistent storage for `/app/data` (database) and `/app/logs` volumes
+
 ## Debugging Tips
 
 1. **Scheduler not running**: Check logs for scheduler initialization errors
-2. **IMAP connection fails**: Test connectivity with `telnet mail.einsle.cloud 993`
+2. **IMAP connection fails**: Verify IMAP credentials and server connectivity
 3. **Claude API errors**: Check API key, rate limits, Anthropic status page
 4. **No alerts received**: Check alert criteria, throttling window (60 min), SMTP logs
 5. **Database errors**: Check volume permissions, SQLite file accessibility
 6. **Container crashes**: Check health endpoint, resource limits, logs
+7. **Coolify deployment issues**: Check Coolify logs, environment variables configuration, and volume mounts
 
 ## Future Enhancement Ideas
 
