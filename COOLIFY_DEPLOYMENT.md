@@ -102,13 +102,13 @@ If you want automatic deployments triggered by GitHub webhooks:
 After selecting your repository, configure these settings:
 
 1. **General Settings**:
-   - **Port Mapping**: Coolify will detect port `5000` from docker-compose.yml
+   - **Port Mapping**: Coolify will detect port `5000` from docker-compose.yaml
    - **Publish Directory**: Leave empty (not needed for Docker Compose)
    - **Base Directory**: `/` (root of repository)
-   - **Docker Compose Location**: `docker-compose.yml`
+   - **Docker Compose Location**: `/docker-compose.yaml` (default - Coolify expects this)
 
 2. **Advanced Settings** (Optional):
-   - **Custom Docker Compose Path**: Leave as `docker-compose.yml`
+   - **Custom Docker Compose Path**: Leave as `/docker-compose.yaml` (default)
    - **Docker Network**: Use Coolify's default network
    - **Pre-Deploy Command**: Leave empty (migrations run in entrypoint.sh)
    - **Post-Deploy Command**: Leave empty
@@ -195,12 +195,12 @@ Nach dem Hinzufügen aller Variablen:
 
 ## Step 4: Configure Persistent Storage
 
-Coolify automatically manages volumes defined in `docker-compose.yml`:
+Coolify automatically manages volumes defined in `docker-compose.yaml`:
 
 - **dmarc-data**: SQLite database storage (`/app/data`)
 - **logs**: Application logs (`/app/logs`)
 
-These are already configured in the `docker-compose.yml`.
+These are already configured in the `docker-compose.yaml`.
 
 ## Step 5: Configure Domain (Optional)
 
@@ -351,7 +351,7 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 
 1. **Check Coolify Logs**: View build/deployment logs
 2. **Verify Environment Variables**: Ensure all required vars are set
-3. **Check Docker Compose**: Ensure `docker-compose.yml` is valid
+3. **Check Docker Compose**: Ensure `docker-compose.yaml` is valid and located at repository root
 
 ### Service Unhealthy
 
@@ -391,7 +391,7 @@ If a deployment fails, Coolify keeps previous versions:
 3. Coolify auto-deploys
 
 ### Docker Configuration
-1. Update `docker-compose.yml` or `Dockerfile`
+1. Update `docker-compose.yaml` or `Dockerfile`
 2. `git push origin main`
 3. Coolify rebuilds and redeploys
 

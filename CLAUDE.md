@@ -193,7 +193,7 @@ Edit `ClaudeService._format_prompt()` in `claude_service.py`. The prompt receive
 - **Routes**: `app/routes/dashboard.py`
 - **Templates**: `app/templates/*.html`
 - **Entry Point**: `run.py`
-- **Docker**: `docker/Dockerfile`, `docker/entrypoint.sh`, `docker-compose.yml`
+- **Docker**: `docker/Dockerfile`, `docker/entrypoint.sh`, `docker-compose.yaml`
 - **Migrations**: `migrations/env.py`, `alembic.ini`
 
 ## Security Considerations
