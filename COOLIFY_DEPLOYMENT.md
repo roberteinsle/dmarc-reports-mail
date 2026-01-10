@@ -2,6 +2,31 @@
 
 This guide explains how to deploy the DMARC Reports Mail Analyzer to Coolify with automatic deployments on Git push.
 
+## Quick Start Zusammenfassung
+
+**Für eilige User - Die wichtigsten Schritte:**
+
+1. **Coolify → Applications → Public Repository**
+   - Repository URL: `https://github.com/roberteinsle/dmarc-reports-mail`
+   - Branch: `main`
+   - Build Pack: Docker Compose
+
+2. **Environment Variables hinzufügen** (alle required!)
+   - FLASK_ENV, SECRET_KEY, DATABASE_URL
+   - IMAP_HOST, IMAP_USER, IMAP_PASSWORD
+   - ANTHROPIC_API_KEY
+   - SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, ALERT_RECIPIENT
+
+3. **Deploy klicken** → Fertig! 🚀
+
+4. **Optional: Auto-Deploy aktivieren**
+   - Coolify → Service → Source → Automatic Deployment: ON
+   - Für GitHub App: Webhook wird automatisch erstellt
+
+**Detaillierte Anleitung unten ↓**
+
+---
+
 ## Prerequisites
 
 1. A Coolify instance (self-hosted or managed)
@@ -23,64 +48,150 @@ git push origin main
 
 ## Step 2: Create Service in Coolify
 
+### 2.1 Navigate to Applications
+
 1. **Login to Coolify Dashboard**
-   - Navigate to your Coolify instance
+   - Navigate to your Coolify instance (e.g., `https://coolify.yourdomain.com`)
+   - Login with your credentials
 
-2. **Add New Resource**
-   - Click **+ New Resource**
-   - Select **Docker Compose**
+2. **Go to Applications**
+   - In the left sidebar or top menu, click on **"Applications"**
+   - You'll see options for different deployment types
 
-3. **Connect Repository**
-   - **Source**: Select GitHub
-   - **Repository**: `https://github.com/roberteinsle/dmarc-reports-mail.git`
+### 2.2 Choose Deployment Type
+
+Since your repository is public on GitHub, you have two recommended options:
+
+#### Option A: Public Repository (Recommended - Einfachste Methode)
+
+1. **Click on "Public Repository"** under "Git Based"
+   - No GitHub authentication required
+   - Perfect for public repositories
+
+2. **Fill in Repository Details**:
+   - **Project Name**: `dmarc-analyzer` (or your preferred name)
+   - **Git Repository URL**: `https://github.com/roberteinsle/dmarc-reports-mail`
    - **Branch**: `main`
-   - **Build Pack**: Docker Compose
+   - **Build Pack**: Select **"Docker Compose"**
 
-4. **Configure Build Settings**
-   - **Docker Compose Location**: `docker-compose.yml` (root directory)
-   - **Base Directory**: `/` (leave default)
+3. **Click "Continue" or "Save"**
+
+#### Option B: Private Repository with GitHub App (Für Auto-Deploy via Webhooks)
+
+If you want automatic deployments triggered by GitHub webhooks:
+
+1. **Click on "Private Repository (with GitHub App)"** under "Git Based"
+
+2. **Install Coolify GitHub App** (if not already installed):
+   - Click "Install GitHub App"
+   - You'll be redirected to GitHub
+   - Select your account/organization
+   - Choose repositories: Select **"Only select repositories"**
+   - Select: `dmarc-reports-mail`
+   - Click "Install & Authorize"
+
+3. **Configure in Coolify**:
+   - **Repository**: Select `roberteinsle/dmarc-reports-mail` from dropdown
+   - **Branch**: `main`
+   - **Build Pack**: Select **"Docker Compose"**
+
+4. **Click "Continue"**
+
+### 2.3 Configure Build Settings
+
+After selecting your repository, configure these settings:
+
+1. **General Settings**:
+   - **Port Mapping**: Coolify will detect port `5000` from docker-compose.yml
+   - **Publish Directory**: Leave empty (not needed for Docker Compose)
+   - **Base Directory**: `/` (root of repository)
+   - **Docker Compose Location**: `docker-compose.yml`
+
+2. **Advanced Settings** (Optional):
+   - **Custom Docker Compose Path**: Leave as `docker-compose.yml`
+   - **Docker Network**: Use Coolify's default network
+   - **Pre-Deploy Command**: Leave empty (migrations run in entrypoint.sh)
+   - **Post-Deploy Command**: Leave empty
+
+3. **Click "Save"**
 
 ## Step 3: Configure Environment Variables
 
-In Coolify, add the following environment variables:
+### 3.1 Access Environment Settings
 
-### Required Variables
+1. **Navigate to your service** in Coolify
+2. Click on **"Environment Variables"** tab or **"Secrets"** tab
+3. Click **"Add Variable"** or **"+ New"**
 
-```env
-# Flask Configuration
+### 3.2 Add Required Variables
+
+**WICHTIG**: Fügen Sie jede Variable einzeln hinzu. Coolify bietet zwei Modi:
+
+- **Normal Variables**: Für nicht-sensitive Werte (sichtbar in UI)
+- **Secret Variables**: Für Passwörter und API Keys (versteckt in UI)
+
+#### Schritt-für-Schritt:
+
+Für jede Variable:
+1. Click **"Add Variable"** oder **"+ Add"**
+2. **Key**: Variablenname eingeben (z.B. `FLASK_ENV`)
+3. **Value**: Wert eingeben
+4. **Is Secret**: Aktivieren für Passwörter/Keys
+5. Click **"Save"** oder **"Add"**
+
+### 3.3 Complete Variable List
+
+Fügen Sie folgende Variablen hinzu:
+
+#### Flask Configuration
+```
 FLASK_ENV=production
-SECRET_KEY=<generate-random-64-char-string>
+SECRET_KEY=<generate-random-64-char-string>  (Is Secret: ✓)
 DATABASE_URL=sqlite:////app/data/dmarc_reports.db
-
-# IMAP Configuration
-IMAP_HOST=mail.einsle.cloud
-IMAP_PORT=993
-IMAP_USER=dmarc-reports@einsle.cloud
-IMAP_PASSWORD=<your-imap-password>
-IMAP_FOLDER=INBOX
-
-# Claude API Configuration
-ANTHROPIC_API_KEY=<your-anthropic-api-key>
-
-# SMTP Configuration (for sending alerts)
-SMTP_HOST=email-smtp.eu-central-1.amazonaws.com
-SMTP_PORT=587
-SMTP_USER=<your-smtp-user>
-SMTP_PASSWORD=<your-smtp-password>
-SMTP_FROM=dmarc-reports@einsle.cloud
-ALERT_RECIPIENT=robert@einsle.com
-
-# Scheduler Configuration
-SCHEDULER_INTERVAL_MINUTES=5
-
-# Logging
-LOG_LEVEL=INFO
 ```
 
 **Generate SECRET_KEY:**
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
+Oder online: https://generate-secret.vercel.app/64
+
+#### IMAP Configuration
+```
+IMAP_HOST=mail.einsle.cloud
+IMAP_PORT=993
+IMAP_USER=dmarc-reports@einsle.cloud
+IMAP_PASSWORD=<your-imap-password>  (Is Secret: ✓)
+IMAP_FOLDER=INBOX
+```
+
+#### Claude API Configuration
+```
+ANTHROPIC_API_KEY=<your-anthropic-api-key>  (Is Secret: ✓)
+```
+
+#### SMTP Configuration
+```
+SMTP_HOST=email-smtp.eu-central-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=<your-smtp-user>
+SMTP_PASSWORD=<your-smtp-password>  (Is Secret: ✓)
+SMTP_FROM=dmarc-reports@einsle.cloud
+ALERT_RECIPIENT=robert@einsle.com
+```
+
+#### Optional Configuration
+```
+SCHEDULER_INTERVAL_MINUTES=5
+LOG_LEVEL=INFO
+```
+
+### 3.4 Verify Variables
+
+Nach dem Hinzufügen aller Variablen:
+1. Überprüfen Sie die Liste
+2. Stellen Sie sicher, dass alle **required** Variablen vorhanden sind
+3. Secrets sollten als `***` angezeigt werden
 
 ## Step 4: Configure Persistent Storage
 
@@ -104,18 +215,76 @@ If you don't configure a domain, Coolify will provide a default URL.
 
 ## Step 6: Enable Auto-Deploy on Git Push
 
-1. In Coolify service settings, go to **Source**
-2. Enable **Automatic Deployment**
-3. Configure webhook:
-   - Coolify will provide a webhook URL
-   - Add this webhook to your GitHub repository
-   - Go to GitHub → Settings → Webhooks → Add webhook
-   - Paste the Coolify webhook URL
-   - Select **Just the push event**
-   - Content type: `application/json`
-   - Save
+### 6.1 Enable Automatic Deployment in Coolify
 
-**Now every `git push` to `main` branch will automatically trigger a deployment!**
+1. **Navigate to your service** in Coolify Dashboard
+2. Go to **"General"** or **"Source"** tab
+3. Find **"Automatic Deployment"** or **"Auto Deploy"** section
+4. **Toggle ON** the automatic deployment switch
+5. **Select trigger branch**: `main` (or your preferred branch)
+6. **Save changes**
+
+### 6.2 Configure GitHub Webhook (if using GitHub App)
+
+If you selected **"Private Repository (with GitHub App)"** in Step 2:
+
+#### Option 1: Automatic Webhook (Recommended)
+
+Coolify usually creates the webhook automatically when you use the GitHub App. Verify:
+
+1. Go to your GitHub repository
+2. Navigate to **Settings** → **Webhooks**
+3. You should see a webhook pointing to your Coolify instance
+4. Status should show a green checkmark ✓
+
+#### Option 2: Manual Webhook Setup
+
+If webhook wasn't created automatically:
+
+1. **In Coolify**:
+   - Navigate to your service → **"Source"** or **"Webhooks"** tab
+   - Copy the **Webhook URL** (usually looks like: `https://coolify.yourdomain.com/api/v1/deploy/webhook/...`)
+
+2. **In GitHub**:
+   - Go to your repository: `https://github.com/roberteinsle/dmarc-reports-mail`
+   - Click **Settings** → **Webhooks** → **Add webhook**
+
+3. **Configure Webhook**:
+   - **Payload URL**: Paste the Coolify webhook URL
+   - **Content type**: `application/json`
+   - **Secret**: Leave empty (unless Coolify provides one)
+   - **Which events would you like to trigger this webhook?**
+     - Select: ☑ **Just the push event**
+   - **Active**: ☑ Checked
+   - Click **Add webhook**
+
+4. **Test Webhook**:
+   - GitHub will send a test ping
+   - Check **Recent Deliveries** tab
+   - Should see a green checkmark for successful delivery
+
+### 6.3 Verify Auto-Deploy Works
+
+Test the automatic deployment:
+
+1. **Make a small change** to your repository (e.g., update README.md)
+   ```bash
+   echo "# Test Auto-Deploy" >> README.md
+   git add README.md
+   git commit -m "Test: Verify Coolify auto-deploy"
+   git push origin main
+   ```
+
+2. **Watch Coolify Dashboard**:
+   - Should automatically start a new deployment
+   - Monitor logs in real-time
+   - Wait for "Deployment successful"
+
+3. **Check GitHub Webhook**:
+   - GitHub → Settings → Webhooks → Recent Deliveries
+   - Should see the push event with 200 OK response
+
+**🎉 Now every `git push` to `main` branch will automatically trigger a deployment!**
 
 ## Step 7: Deploy
 
