@@ -381,18 +381,20 @@ If you see "unable to open database file" or permission errors:
 
 If you see "no such table: processing_log" or similar errors:
 
-1. **Root Cause**: Empty database file exists from a previous failed deployment, but tables weren't created
-2. **Solution**: Delete the corrupted database file and redeploy:
+1. **Root Cause**: Database file exists but tables are missing (can happen during deployment)
+2. **Automatic Fix**: The entrypoint script now automatically creates missing tables on every startup using `db.create_all()` (idempotent operation)
+3. **If errors persist**: Redeploy the application in Coolify dashboard - the entrypoint will fix it automatically
+4. **Manual Fix (if needed)**: Delete the database and redeploy:
    ```bash
-   # SSH into the Coolify server
-   docker exec -it dmarc-analyzer rm /app/data/dmarc_reports.db*
-   # Then redeploy in Coolify dashboard
+   # Find container name
+   docker ps | grep dmarc
+
+   # Delete database file
+   docker exec -it <container-name> rm /app/data/dmarc_reports.db*
+
+   # Redeploy in Coolify dashboard
    ```
-3. **Alternative**: In Coolify, delete the persistent volume and recreate it:
-   - Stop the service
-   - Delete the `dmarc-data` volume
-   - Redeploy (volume will be recreated automatically)
-4. **Verify**: Check logs for "Database created successfully" or "Database file exists" during startup
+5. **Verify**: Check logs for "Database tables created/verified successfully" during startup
 
 ### IMAP/SMTP Connection Issues
 

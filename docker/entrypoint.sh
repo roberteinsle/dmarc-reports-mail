@@ -43,9 +43,10 @@ sleep 2
 echo "Running database migrations as appuser..."
 gosu appuser alembic upgrade head || echo "No migrations to run or alembic not configured yet"
 
-# Initialize database if it doesn't exist
+# Check if database exists and has tables
+echo "Checking database status..."
 if [ ! -f "/app/data/dmarc_reports.db" ]; then
-    echo "Database file not found, initializing as appuser..."
+    echo "Database file not found, creating new database..."
 
     # First, test if SQLite can work at all in this directory
     echo "Testing SQLite directly..."
@@ -65,29 +66,37 @@ except Exception as e:
     traceback.print_exc()
     exit(1)
 "
-
-    # Now try with Flask-SQLAlchemy
-    gosu appuser python -c "from app import create_app; from app.models.database import db; app = create_app(); app.app_context().push(); db.create_all(); print('Database initialized')" || {
-        echo "ERROR: Failed to initialize database"
-        echo "Checking database directory permissions:"
-        ls -la /app/data/
-        echo "Checking DATABASE_URL:"
-        gosu appuser python -c "import os; print(f'DATABASE_URL={os.getenv(\"DATABASE_URL\")}')"
-        exit 1
-    }
-
-    # Verify database was created
-    if [ -f "/app/data/dmarc_reports.db" ]; then
-        echo "Database created successfully:"
-        ls -lh /app/data/dmarc_reports.db*
-    else
-        echo "ERROR: Database file was not created!"
-        exit 1
-    fi
 else
     echo "Database file exists:"
     ls -lh /app/data/dmarc_reports.db*
 fi
+
+# Always ensure tables exist (idempotent operation)
+echo "Ensuring database tables exist..."
+gosu appuser python -c "
+from app import create_app
+from app.models.database import db
+app = create_app()
+with app.app_context():
+    try:
+        db.create_all()
+        print('Database tables created/verified successfully')
+    except Exception as e:
+        print(f'ERROR: Failed to create database tables - {e}')
+        import traceback
+        traceback.print_exc()
+        exit(1)
+" || {
+    echo "ERROR: Failed to initialize database tables"
+    echo "Checking database directory permissions:"
+    ls -la /app/data/
+    echo "Checking DATABASE_URL:"
+    gosu appuser python -c "import os; print(f'DATABASE_URL={os.getenv(\"DATABASE_URL\")}')"
+    exit 1
+}
+
+echo "Database initialization complete:"
+ls -lh /app/data/dmarc_reports.db* 2>/dev/null || echo "No database files found"
 
 # Test database connectivity as appuser
 echo "Testing database connectivity..."
