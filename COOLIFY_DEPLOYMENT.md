@@ -102,10 +102,12 @@ If you want automatic deployments triggered by GitHub webhooks:
 After selecting your repository, configure these settings:
 
 1. **General Settings**:
-   - **Port Mapping**: Coolify will detect port `5000` from docker-compose.yaml
+   - **Port Mapping**: Coolify will automatically detect port `5000` from the `expose` directive in docker-compose.yaml
    - **Publish Directory**: Leave empty (not needed for Docker Compose)
    - **Base Directory**: `/` (root of repository)
    - **Docker Compose Location**: `/docker-compose.yaml` (default - Coolify expects this)
+
+   **WICHTIG**: The docker-compose.yaml uses `expose: - "5000"` instead of `ports:` to avoid conflicts with Coolify's reverse proxy
 
 2. **Advanced Settings** (Optional):
    - **Custom Docker Compose Path**: Leave as `/docker-compose.yaml` (default)
@@ -403,6 +405,19 @@ If you see "no such table: processing_log" or similar errors:
 1. **Check Webhook**: Verify webhook URL in GitHub
 2. **Test Webhook**: GitHub → Settings → Webhooks → Recent Deliveries
 3. **Check Coolify**: Ensure auto-deployment is enabled
+
+### Domain Shows "no available server"
+
+If you see "no available server" when accessing your domain:
+
+1. **Root Cause**: The `docker-compose.yaml` uses `ports:` mapping instead of `expose:`, causing conflicts with Coolify's reverse proxy
+2. **Solution**: The application has been configured to use `expose: - "5000"` instead of `ports: - "5000:5000"`
+3. **After fixing**: Redeploy the application in Coolify dashboard
+4. **Verify**: Check in Coolify → Service → Domains that:
+   - Domain is correctly configured
+   - Port is set to 5000
+   - SSL/TLS certificate is active
+5. **Alternative Check**: Access the container directly via Coolify's internal proxy to verify the app is running
 
 ## Rollback
 
