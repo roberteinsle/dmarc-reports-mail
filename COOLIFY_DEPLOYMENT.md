@@ -372,8 +372,25 @@ If you see "unable to open database file" or permission errors:
 4. **Manual Check**: SSH into container and verify:
    ```bash
    docker exec -it dmarc-analyzer ls -la /app/data
-   # Should show: drwxr-xr-x appuser appuser
+   # Should show: drwxrwxr-x appuser appuser
    ```
+
+### Database Tables Missing ("no such table" errors)
+
+If you see "no such table: processing_log" or similar errors:
+
+1. **Root Cause**: Empty database file exists from a previous failed deployment, but tables weren't created
+2. **Solution**: Delete the corrupted database file and redeploy:
+   ```bash
+   # SSH into the Coolify server
+   docker exec -it dmarc-analyzer rm /app/data/dmarc_reports.db*
+   # Then redeploy in Coolify dashboard
+   ```
+3. **Alternative**: In Coolify, delete the persistent volume and recreate it:
+   - Stop the service
+   - Delete the `dmarc-data` volume
+   - Redeploy (volume will be recreated automatically)
+4. **Verify**: Check logs for "Database created successfully" or "Database file exists" during startup
 
 ### IMAP/SMTP Connection Issues
 
