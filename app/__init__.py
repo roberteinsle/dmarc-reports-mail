@@ -38,10 +38,8 @@ def create_app(config_name=None):
     # Setup logging
     setup_logging(app)
 
-    # Create database tables
-    with app.app_context():
-        db.create_all()
-        app.logger.info('Database tables created successfully')
+    # Database tables are created by entrypoint.sh before app starts
+    # This ensures /app/data directory exists with proper permissions first
 
     # Register blueprints
     from app.routes import dashboard
