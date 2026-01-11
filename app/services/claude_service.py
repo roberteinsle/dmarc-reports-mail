@@ -47,12 +47,20 @@ class ClaudeService:
                 )
 
                 # Extract text from response
-                analysis_text = response.content[0].text
+                analysis_text = response.content[0].text.strip()
+
+                # Remove markdown code blocks if present
+                if analysis_text.startswith('```json'):
+                    analysis_text = analysis_text.replace('```json', '', 1)
+                if analysis_text.endswith('```'):
+                    analysis_text = analysis_text.rsplit('```', 1)[0]
+                analysis_text = analysis_text.strip()
 
                 # Try to parse as JSON
                 try:
                     analysis = json.loads(analysis_text)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse Claude response as JSON: {e}")
                     # If not JSON, wrap in a structure
                     analysis = {
                         'summary': analysis_text,
@@ -60,7 +68,10 @@ class ClaudeService:
                         'failures': [],
                         'unauthorized_sources': [],
                         'anomalies': [],
-                        'recommendations': []
+                        'recommendations': [],
+                        'action_items': [],
+                        'positive_findings': [],
+                        'next_steps': []
                     }
 
                 logger.info(f"Claude analysis completed for report {report_data.get('report_id')}")
@@ -118,11 +129,7 @@ class ClaudeService:
         if len(records_data) > 10:
             records_text += f"\n  ... and {len(records_data) - 10} more records"
 
-        prompt = f"""You are a DMARC security analyst. Analyze this DMARC report and identify:
-1. Authentication failures (SPF/DKIM/DMARC)
-2. Unauthorized sending sources
-3. Suspicious patterns or anomalies
-4. Recommendations for action
+        prompt = f"""You are a DMARC security analyst. Analyze this DMARC report and provide detailed, actionable recommendations.
 
 Report Summary:
 - Domain: {report_data.get('policy_domain', 'N/A')}
@@ -141,17 +148,38 @@ Policy:
 - SPF alignment: {report_data.get('policy_aspf', 'N/A')}
 - Policy: {report_data.get('policy_p', 'N/A')}
 
-Provide analysis in JSON format:
+Provide analysis in JSON format with the following structure:
 {{
-  "summary": "Brief overview of findings",
-  "failures": ["List of authentication failures"],
-  "unauthorized_sources": ["List of unauthorized IPs/sources"],
-  "anomalies": ["List of suspicious patterns"],
+  "summary": "Brief overview of findings (2-3 sentences)",
   "severity": "low|medium|high|critical",
-  "recommendations": ["Actionable recommendations"]
+  "failures": ["Detailed authentication failures with IP, reason, and impact"],
+  "unauthorized_sources": ["Unauthorized IPs/sources with explanation"],
+  "anomalies": ["Suspicious patterns with context"],
+  "recommendations": ["General recommendations"],
+  "action_items": [
+    {{
+      "priority": "critical|high|medium|low",
+      "title": "Brief action title",
+      "description": "What to do and why",
+      "steps": ["Step 1", "Step 2", "..."],
+      "affected_ips": ["IP addresses if applicable"],
+      "expected_outcome": "What should happen after this action"
+    }}
+  ],
+  "positive_findings": ["Things that are working correctly - mention these to provide balanced feedback"],
+  "next_steps": ["Immediate next steps in order of priority"]
 }}
 
-Focus on actionable insights. If everything looks normal, say so."""
+**Important Guidelines:**
+1. Be specific - mention exact IPs, counts, and values
+2. Prioritize action items: critical (immediate action needed), high (action within 24h), medium (action within week), low (monitor)
+3. Provide concrete steps, not vague suggestions
+4. Include positive findings to acknowledge what's working well
+5. Mention expected outcomes for each action
+6. If everything is normal, still provide monitoring and best practice recommendations
+7. Consider business context - some "failures" might be expected (forwarding, mailing lists, etc.)
+
+Focus on actionable insights that a system administrator can implement immediately."""
 
         return prompt
 

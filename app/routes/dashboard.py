@@ -61,11 +61,34 @@ def report_detail(report_id):
     records = Record.query.filter_by(report_id=report_id).all()
     alerts = Alert.query.filter_by(report_id=report_id).all()
 
+    # Enrich records with IP information
+    from app.utils.ip_utils import enrich_records_with_ip_info
+    records = enrich_records_with_ip_info(records)
+
     # Parse Claude analysis
     claude_analysis = None
     if report.claude_analysis:
         try:
             claude_analysis = json.loads(report.claude_analysis)
+            # Clean up old format where summary contains JSON code blocks
+            if 'summary' in claude_analysis and isinstance(claude_analysis['summary'], str):
+                summary = claude_analysis['summary']
+                # Remove ```json and ``` markers if present
+                if summary.startswith('```json'):
+                    # Extract JSON from code block
+                    import re
+                    json_match = re.search(r'```json\s*(\{.*?\})\s*```', summary, re.DOTALL)
+                    if json_match:
+                        try:
+                            # Parse the inner JSON
+                            inner_data = json.loads(json_match.group(1))
+                            # Merge with existing data, inner takes precedence
+                            claude_analysis.update(inner_data)
+                        except json.JSONDecodeError:
+                            # If parsing fails, just clean the summary text
+                            claude_analysis['summary'] = summary.replace('```json', '').replace('```', '').strip()
+                    else:
+                        claude_analysis['summary'] = summary.replace('```json', '').replace('```', '').strip()
         except json.JSONDecodeError:
             claude_analysis = {'summary': report.claude_analysis}
 

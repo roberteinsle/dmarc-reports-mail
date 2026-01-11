@@ -36,18 +36,87 @@
 
 {% if claude_analysis %}
 <div class="card mt-4">
-    <div class="card-header">
-        <h5>Claude AI Analysis</h5>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Claude AI Analysis</h5>
+        {% if claude_analysis.severity %}
+        <span class="badge severity-{{ claude_analysis.severity }} fs-6">{{ claude_analysis.severity|upper }}</span>
+        {% endif %}
     </div>
     <div class="card-body">
-        <p><strong>Summary:</strong> {{ claude_analysis.summary }}</p>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> <strong>Summary:</strong> {{ claude_analysis.summary }}
+        </div>
 
-        {% if claude_analysis.severity %}
-        <p><strong>Severity:</strong> <span class="badge severity-{{ claude_analysis.severity }}">{{ claude_analysis.severity }}</span></p>
+        {% if claude_analysis.positive_findings %}
+        <div class="alert alert-success">
+            <h6><i class="bi bi-check-circle"></i> What's Working Well</h6>
+            <ul class="mb-0">
+                {% for finding in claude_analysis.positive_findings %}
+                <li>{{ finding }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if claude_analysis.action_items %}
+        <div class="card border-warning mb-3">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Concrete Action Items</h6>
+            </div>
+            <div class="card-body">
+                {% for item in claude_analysis.action_items %}
+                <div class="card mb-3 border-{{ 'danger' if item.priority == 'critical' else ('warning' if item.priority == 'high' else ('info' if item.priority == 'medium' else 'secondary')) }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>{{ item.title }}</strong>
+                        <span class="badge bg-{{ 'danger' if item.priority == 'critical' else ('warning' if item.priority == 'high' else ('info' if item.priority == 'medium' else 'secondary')) }}">
+                            {{ item.priority|upper }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Description:</strong> {{ item.description }}</p>
+
+                        {% if item.steps %}
+                        <p><strong>Steps to Take:</strong></p>
+                        <ol>
+                            {% for step in item.steps %}
+                            <li>{{ step }}</li>
+                            {% endfor %}
+                        </ol>
+                        {% endif %}
+
+                        {% if item.affected_ips %}
+                        <p><strong>Affected IPs:</strong>
+                            {% for ip in item.affected_ips %}
+                            <code>{{ ip }}</code>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+
+                        {% if item.expected_outcome %}
+                        <div class="alert alert-light mb-0">
+                            <strong>Expected Outcome:</strong> {{ item.expected_outcome }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if claude_analysis.next_steps %}
+        <div class="alert alert-primary">
+            <h6><i class="bi bi-arrow-right-circle"></i> Immediate Next Steps</h6>
+            <ol class="mb-0">
+                {% for step in claude_analysis.next_steps %}
+                <li>{{ step }}</li>
+                {% endfor %}
+            </ol>
+        </div>
         {% endif %}
 
         {% if claude_analysis.failures %}
-        <h6>Failures:</h6>
+        <h6 class="mt-3"><i class="bi bi-x-circle text-danger"></i> Authentication Failures:</h6>
         <ul>
             {% for failure in claude_analysis.failures %}
             <li>{{ failure }}</li>
@@ -55,8 +124,26 @@
         </ul>
         {% endif %}
 
+        {% if claude_analysis.unauthorized_sources %}
+        <h6 class="mt-3"><i class="bi bi-shield-exclamation text-warning"></i> Unauthorized Sources:</h6>
+        <ul>
+            {% for source in claude_analysis.unauthorized_sources %}
+            <li>{{ source }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if claude_analysis.anomalies %}
+        <h6 class="mt-3"><i class="bi bi-graph-up text-info"></i> Detected Anomalies:</h6>
+        <ul>
+            {% for anomaly in claude_analysis.anomalies %}
+            <li>{{ anomaly }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
         {% if claude_analysis.recommendations %}
-        <h6>Recommendations:</h6>
+        <h6 class="mt-3"><i class="bi bi-lightbulb"></i> General Recommendations:</h6>
         <ul>
             {% for rec in claude_analysis.recommendations %}
             <li>{{ rec }}</li>
@@ -72,28 +159,59 @@
         <h5>Authentication Records ({{ records|length }})</h5>
     </div>
     <div class="card-body">
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Source IP</th>
-                    <th>Count</th>
-                    <th>SPF</th>
-                    <th>DKIM</th>
-                    <th>Disposition</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in records %}
-                <tr>
-                    <td>{{ record.source_ip }}</td>
-                    <td>{{ record.count }}</td>
-                    <td><span class="badge bg-{{ 'success' if record.spf_result == 'pass' else 'danger' }}">{{ record.spf_result }}</span></td>
-                    <td><span class="badge bg-{{ 'success' if record.dkim_result == 'pass' else 'danger' }}">{{ record.dkim_result }}</span></td>
-                    <td>{{ record.disposition }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Source IP</th>
+                        <th>Hostname / Provider</th>
+                        <th>Count</th>
+                        <th>SPF</th>
+                        <th>DKIM</th>
+                        <th>Disposition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr class="{{ 'table-danger' if record.spf_result == 'fail' or record.dkim_result == 'fail' else '' }}">
+                        <td>
+                            <code>{{ record.source_ip }}</code>
+                            {% if record.ip_info %}
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-globe"></i> {{ record.ip_info.ip_type }}
+                                {% if record.ip_info.is_private %}
+                                <span class="badge bg-warning text-dark">Private</span>
+                                {% endif %}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.ip_info and record.ip_info.hostname %}
+                            <i class="bi bi-server"></i> {{ record.ip_info.hostname }}
+                            {% else %}
+                            <span class="text-muted">No reverse DNS</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ record.count }}</strong></td>
+                        <td><span class="badge bg-{{ 'success' if record.spf_result == 'pass' else 'danger' }}">{{ record.spf_result }}</span></td>
+                        <td><span class="badge bg-{{ 'success' if record.dkim_result == 'pass' else 'danger' }}">{{ record.dkim_result }}</span></td>
+                        <td>
+                            {% if record.disposition == 'none' %}
+                            <span class="badge bg-secondary">{{ record.disposition }}</span>
+                            {% elif record.disposition == 'quarantine' %}
+                            <span class="badge bg-warning text-dark">{{ record.disposition }}</span>
+                            {% elif record.disposition == 'reject' %}
+                            <span class="badge bg-danger">{{ record.disposition }}</span>
+                            {% else %}
+                            {{ record.disposition }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
