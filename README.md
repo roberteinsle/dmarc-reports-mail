@@ -67,15 +67,19 @@ python run.py
 
 Dashboard: http://localhost:5000
 
-### Coolify Deployment (Production)
+### Portainer Deployment (Production)
 
-1. **Add Service in Coolify**:
-   - Go to your Coolify dashboard
-   - Create new service → Docker Compose
-   - Connect your Git repository: `https://github.com/roberteinsle/dmarc-reports-mail.git`
+1. **Add Stack in Portainer**:
+   - Go to your Portainer dashboard
+   - Navigate to Stacks → Add stack
+   - Name: `dmarc-analyzer`
+   - Build method: **Repository**
+   - Repository URL: `https://github.com/roberteinsle/dmarc-reports-mail`
+   - Repository reference: `refs/heads/main`
+   - Compose path: `docker-compose.yaml`
 
 2. **Configure Environment Variables**:
-   Add the following environment variables in Coolify:
+   Add the following environment variables in Portainer stack configuration:
    ```env
    FLASK_ENV=production
    SECRET_KEY=<generate-secure-key>
@@ -104,18 +108,23 @@ Dashboard: http://localhost:5000
    LOG_LEVEL=INFO
    ```
 
-3. **Configure Volumes**:
-   - Add persistent volume for `/app/data` (database storage)
-   - Add persistent volume for `/app/logs` (log files)
+3. **Deploy Stack**:
+   - Click "Deploy the stack"
+   - Portainer will build and start the container
+   - Volumes are automatically created: `dmarc-data` and `logs`
+   - Container connects to `nginx-proxy-manager_default` network
 
-4. **Deploy**:
-   - Coolify will automatically build and deploy the container
-   - Health check endpoint: `/health`
-   - Coolify handles SSL/TLS termination and domain mapping
+4. **Configure nginx-proxy-manager**:
+   - Add proxy host pointing to `dmarc-analyzer:5000`
+   - Configure domain (e.g., `dmarc.yourdomain.com`)
+   - Enable SSL certificate (Let's Encrypt)
+   - nginx-proxy-manager handles SSL/TLS termination and domain routing
 
 5. **Access Dashboard**:
-   - Use the domain/URL provided by Coolify
-   - Health check: `https://<your-domain>/health`
+   - Use your configured domain: `https://dmarc.yourdomain.com`
+   - Health check: `https://dmarc.yourdomain.com/health`
+
+**For detailed deployment instructions, see [`PORTAINER_DEPLOYMENT.md`](PORTAINER_DEPLOYMENT.md)**
 
 ### Local Docker Deployment (Development/Testing)
 
@@ -262,7 +271,7 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 ### Problem: Scheduler not running
 
 Solution:
-- Check logs in Coolify dashboard or via `docker-compose logs -f` (local)
+- Check logs in Portainer or via `docker-compose logs -f` (local)
 - Verify all environment variables are set correctly
 - Restart the service
 
@@ -288,13 +297,22 @@ Solution:
 - Note alert throttling (60-minute window per alert type)
 - Check logs for SMTP errors
 
-### Problem: Coolify deployment issues
+### Problem: Portainer deployment issues
 
 Solution:
-- Verify all required environment variables are set in Coolify
-- Check that persistent volumes are properly configured
-- Review Coolify deployment logs
+- Verify all required environment variables are set in Portainer stack
+- Check that persistent volumes are properly created
+- Review Portainer deployment logs
 - Ensure health check endpoint `/health` is accessible
+- Verify container is connected to `nginx-proxy-manager_default` network
+
+### Problem: Cannot access via domain
+
+Solution:
+- Check nginx-proxy-manager proxy host configuration
+- Verify SSL certificate is active
+- Ensure DNS points to correct server
+- Check that container is on the same network as nginx-proxy-manager
 
 ## Security Notes
 

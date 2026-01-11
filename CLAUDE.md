@@ -12,7 +12,7 @@ DMARC Reports Mail Analyzer - A Python Flask application that automatically fetc
 - APScheduler for background jobs (5-minute intervals)
 - Anthropic Claude API for intelligent analysis
 - IMAP for email retrieval, AWS SES SMTP for alerts
-- Docker deployment via Coolify
+- Docker deployment via Portainer with nginx-proxy-manager
 
 ## Essential Commands
 
@@ -200,7 +200,7 @@ Edit `ClaudeService._format_prompt()` in `claude_service.py`. The prompt receive
 
 1. **Credentials**: Never commit `.env` file. Check `.gitignore` includes `.env`
 2. **Docker Security**:
-   - Container starts as root only to fix Docker volume permissions (Coolify requirement)
+   - Container starts as root only to fix Docker volume permissions
    - Uses `gosu` to drop privileges to non-root `appuser` (UID 1000) before running application
    - Application process runs as `appuser` for security
    - Entrypoint script fixes `/app/data` and `/app/logs` ownership on startup
@@ -258,28 +258,30 @@ except IntegrityError:
 
 ## Deployment Notes
 
-**Coolify deployment**:
+**Portainer deployment with nginx-proxy-manager**:
 - Application runs on port 5000 internally
 - Data persists in Docker volume `dmarc-data`
-- Logs mapped to `./logs` directory for easy access
+- Logs persists in Docker volume `logs`
 - Health check endpoint `/health` for monitoring (returns 200 when healthy, 503 when unhealthy)
 - Container name: `dmarc-analyzer`
+- Reverse proxy via nginx-proxy-manager for SSL/TLS and domain routing
 
 **Security model**:
 - Container starts as root to fix Docker volume permissions
 - Uses `gosu` to drop to non-root `appuser` (UID 1000) before running application
-- Entrypoint fixes `/app/data` and `/app/logs` ownership on startup (required for Coolify volumes)
+- Entrypoint fixes `/app/data` and `/app/logs` ownership on startup
 - Application runs as `appuser` for security
 
 **Environment variables** must be set before first run - app validates on startup and fails fast if missing.
 
 **Database migrations** run automatically via `entrypoint.sh` on container start.
 
-**Coolify setup**:
-- Add repository as Docker Compose service in Coolify
-- Set required environment variables in Coolify environment settings
-- Coolify will handle port mapping and SSL/TLS termination
+**Portainer setup**:
+- Deploy stack from Git repository in Portainer
+- Set required environment variables in stack configuration
+- nginx-proxy-manager handles SSL/TLS termination and domain routing
 - Use persistent storage for `/app/data` (database) and `/app/logs` volumes
+- See `PORTAINER_DEPLOYMENT.md` for detailed setup instructions
 
 ## Debugging Tips
 
@@ -289,7 +291,8 @@ except IntegrityError:
 4. **No alerts received**: Check alert criteria, throttling window (60 min), SMTP logs
 5. **Database errors**: Check volume permissions, SQLite file accessibility
 6. **Container crashes**: Check health endpoint, resource limits, logs
-7. **Coolify deployment issues**: Check Coolify logs, environment variables configuration, and volume mounts
+7. **Portainer deployment issues**: Check Portainer logs, environment variables configuration, and volume mounts
+8. **nginx-proxy-manager issues**: Check proxy host configuration, SSL certificate status, and container network connectivity
 
 ## Future Enhancement Ideas
 
