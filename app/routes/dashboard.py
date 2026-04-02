@@ -6,6 +6,7 @@ from sqlalchemy import func, desc
 from app.models.database import db, Report, Record, Alert, ProcessingLog
 from datetime import datetime, timedelta
 import json
+import dns.resolver
 
 bp = Blueprint('dashboard', __name__)
 
@@ -60,10 +61,6 @@ def report_detail(report_id):
     report = Report.query.get_or_404(report_id)
     records = Record.query.filter_by(report_id=report_id).all()
     alerts = Alert.query.filter_by(report_id=report_id).all()
-
-    # Enrich records with IP information
-    from app.utils.ip_utils import enrich_records_with_ip_info
-    records = enrich_records_with_ip_info(records)
 
     # Parse Claude analysis
     claude_analysis = None
@@ -205,3 +202,53 @@ def trigger_processing():
     status_code = 200 if result['status'] == 'success' else 500
 
     return jsonify(result), status_code
+
+
+@bp.route('/tools/dkim-selectors')
+def dkim_selectors():
+    """List all DKIM selectors seen in reports for a given domain."""
+    domain = request.args.get('domain', '').strip().lower()
+    results = []
+    all_domains = db.session.query(Report.domain).distinct().order_by(Report.domain).all()
+    all_domains = [d[0] for d in all_domains]
+
+    if domain:
+        # Query distinct selectors seen in records for this domain
+        rows = (
+            db.session.query(Record.dkim_selector, Record.dkim_domain, func.sum(Record.count).label('total'))
+            .join(Report, Record.report_id == Report.id)
+            .filter(Report.domain == domain, Record.dkim_selector.isnot(None))
+            .group_by(Record.dkim_selector, Record.dkim_domain)
+            .order_by(desc('total'))
+            .all()
+        )
+
+        for selector, dkim_domain, total in rows:
+            lookup_domain = dkim_domain or domain
+            dns_name = f"{selector}._domainkey.{lookup_domain}"
+            dns_record = None
+            dns_status = 'unknown'
+            try:
+                answers = dns.resolver.resolve(dns_name, 'TXT')
+                dns_record = ' '.join(part.decode() for rdata in answers for part in rdata.strings)
+                dns_status = 'active'
+            except dns.resolver.NXDOMAIN:
+                dns_status = 'not_found'
+            except dns.resolver.NoAnswer:
+                dns_status = 'no_answer'
+            except Exception:
+                dns_status = 'error'
+
+            results.append({
+                'selector': selector,
+                'dkim_domain': lookup_domain,
+                'dns_name': dns_name,
+                'total_emails': total,
+                'dns_status': dns_status,
+                'dns_record': dns_record,
+            })
+
+    return render_template('dkim_selectors.html',
+                           domain=domain,
+                           results=results,
+                           all_domains=all_domains)

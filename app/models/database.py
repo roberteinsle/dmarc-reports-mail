@@ -44,6 +44,17 @@ class Report(db.Model):
     records = db.relationship('Record', backref='report', lazy='dynamic', cascade='all, delete-orphan')
     alerts = db.relationship('Alert', backref='report', lazy='dynamic', cascade='all, delete-orphan')
 
+    @property
+    def severity(self):
+        """Extract severity from Claude analysis JSON."""
+        if not self.claude_analysis:
+            return None
+        try:
+            import json
+            return json.loads(self.claude_analysis).get('severity')
+        except Exception:
+            return None
+
     def __repr__(self):
         return f'<Report {self.report_id} - {self.domain}>'
 
@@ -91,6 +102,9 @@ class Record(db.Model):
 
     # Header from
     header_from = db.Column(db.String(255))
+
+    # Resolved hostname (populated at processing time)
+    source_hostname = db.Column(db.String(255))
 
     # Timestamp
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

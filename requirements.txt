@@ -17,6 +17,9 @@ email-validator==2.1.0
 # HTTP Requests
 requests==2.31.0
 
+# DNS Lookups
+dnspython==2.6.1
+
 # Database Migrations
 alembic==1.13.1
 

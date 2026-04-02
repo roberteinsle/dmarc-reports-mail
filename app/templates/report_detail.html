@@ -174,21 +174,10 @@
                 <tbody>
                     {% for record in records %}
                     <tr class="{{ 'table-danger' if record.spf_result == 'fail' or record.dkim_result == 'fail' else '' }}">
+                        <td><code>{{ record.source_ip }}</code></td>
                         <td>
-                            <code>{{ record.source_ip }}</code>
-                            {% if record.ip_info %}
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-globe"></i> {{ record.ip_info.ip_type }}
-                                {% if record.ip_info.is_private %}
-                                <span class="badge bg-warning text-dark">Private</span>
-                                {% endif %}
-                            </small>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if record.ip_info and record.ip_info.hostname %}
-                            <i class="bi bi-server"></i> {{ record.ip_info.hostname }}
+                            {% if record.source_hostname %}
+                            <i class="bi bi-server"></i> {{ record.source_hostname }}
                             {% else %}
                             <span class="text-muted">No reverse DNS</span>
                             {% endif %}

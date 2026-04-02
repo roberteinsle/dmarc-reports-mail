@@ -14,6 +14,7 @@
                     <th>Domain</th>
                     <th>Reporter</th>
                     <th>Report ID</th>
+                    <th>Severity</th>
                     <th>Status</th>
                     <th>Created</th>
                     <th>Actions</th>
@@ -26,6 +27,13 @@
                     <td>{{ report.domain }}</td>
                     <td>{{ report.org_name }}</td>
                     <td><small>{{ report.report_id[:20] }}...</small></td>
+                    <td>
+                        {% if report.severity %}
+                        <span class="badge severity-{{ report.severity }}">{{ report.severity|upper }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
                     <td><span class="badge bg-{{ 'success' if report.status == 'processed' else 'warning' }}">{{ report.status }}</span></td>
                     <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td><a href="/reports/{{ report.id }}" class="btn btn-sm btn-primary">View</a></td>

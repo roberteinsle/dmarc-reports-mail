@@ -194,9 +194,12 @@ def process_dmarc_reports(app):
                     db.session.add(report)
                     db.session.flush()  # Get report.id
 
-                    # Save records
+                    # Save records (with reverse DNS lookup)
+                    from app.utils.ip_utils import get_ip_info
                     for record_data in records_data:
                         record = Record(report_id=report.id, **record_data)
+                        ip_info = get_ip_info(record_data.get('source_ip', ''))
+                        record.source_hostname = ip_info.get('hostname')
                         db.session.add(record)
 
                     # Analyze with Claude
