@@ -247,8 +247,8 @@ def process_dmarc_reports(app):
 
                     logger.info(f"Successfully processed report {report.report_id}")
 
-                # Delete email after successful processing
-                imap_service.delete_email(msg_id)
+                # Move email to archive after successful processing
+                imap_service.move_to_archive(msg_id)
 
             except Exception as e:
                 logger.error(f"Failed to process email {msg_id}: {e}", exc_info=True)

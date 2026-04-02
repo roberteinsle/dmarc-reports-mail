@@ -163,29 +163,35 @@ class IMAPService:
             logger.error(f"Failed to decompress {filename}: {e}", exc_info=True)
             return None
 
-    def delete_email(self, msg_id: bytes) -> bool:
+    def move_to_archive(self, msg_id: bytes, archive_folder: str = 'Archive') -> bool:
         """
-        Delete email by message ID.
+        Move email to archive folder.
 
         Args:
             msg_id: Email message ID
+            archive_folder: Target IMAP folder name (default: Archive)
 
         Returns:
-            True if deletion successful, False otherwise
+            True if move successful, False otherwise
         """
         if not self.connection:
             raise ConnectionError("Not connected to IMAP server")
 
         try:
-            # Mark for deletion
+            # Copy to archive folder
+            result, data = self.connection.copy(msg_id, archive_folder)
+            if result != 'OK':
+                logger.error(f"Failed to copy email {msg_id} to {archive_folder}: {data}")
+                return False
+
+            # Mark original as deleted and expunge
             self.connection.store(msg_id, '+FLAGS', '\\Deleted')
-            # Expunge to permanently delete
             self.connection.expunge()
-            logger.info(f"Deleted email {msg_id}")
+            logger.info(f"Moved email {msg_id} to {archive_folder}")
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete email {msg_id}: {e}", exc_info=True)
+            logger.error(f"Failed to move email {msg_id} to {archive_folder}: {e}", exc_info=True)
             return False
 
     def close(self):
