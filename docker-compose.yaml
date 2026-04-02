@@ -40,8 +40,3 @@ volumes:
     driver: local
   logs:
     driver: local
-
-networks:
-  default:
-    name: nginx-proxy-manager_default
-    external: true

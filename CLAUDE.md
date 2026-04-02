@@ -12,7 +12,7 @@ DMARC Reports Mail Analyzer - A Python Flask application that automatically fetc
 - APScheduler for background jobs (5-minute intervals)
 - Anthropic Claude API for intelligent analysis
 - IMAP for email retrieval, AWS SES SMTP for alerts
-- Docker deployment via Portainer with nginx-proxy-manager
+- Docker deployment via Coolify (Docker Compose from Git)
 
 ## Essential Commands
 
@@ -107,7 +107,7 @@ The application follows this workflow every 5 minutes (orchestrated by `schedule
 - Formats analysis prompts with report statistics
 - Calls Claude API (model: claude-sonnet-4-5-20250929)
 - Implements retry logic with exponential backoff for rate limits
-- Returns JSON with: summary, failures, unauthorized_sources, anomalies, severity, recommendations
+- Returns JSON with: summary, severity, failures, unauthorized_sources, anomalies, recommendations, action_items (with priority/steps/expected_outcome), positive_findings, next_steps
 
 **AlertService** (`alert_service.py`):
 - Evaluates alert criteria based on records + Claude analysis
@@ -115,6 +115,12 @@ The application follows this workflow every 5 minutes (orchestrated by `schedule
 - Formats HTML and plain text email alerts
 - Sends via AWS SES SMTP with STARTTLS
 - Implements throttling (60-minute window per alert type)
+
+**IPUtils** (`app/utils/ip_utils.py`):
+- Enriches `Record` objects with reverse DNS hostname, IPv4/IPv6 type, private/global flags
+- Identifies email provider from hostname (Google, Microsoft, Amazon SES, SendGrid, etc.)
+- Called in `report_detail` route to augment records before rendering
+- DNS lookups may be slow; failures are silently ignored
 
 **SchedulerService** (`scheduler_service.py`):
 - Initializes APScheduler BackgroundScheduler
@@ -195,6 +201,7 @@ Edit `ClaudeService._format_prompt()` in `claude_service.py`. The prompt receive
 - **Entry Point**: `run.py`
 - **Docker**: `docker/Dockerfile`, `docker/entrypoint.sh`, `docker-compose.yaml`
 - **Migrations**: `migrations/env.py`, `alembic.ini`
+- **One-off scripts**: `scripts/migrate_old_reports.py`
 
 ## Security Considerations
 
@@ -258,13 +265,13 @@ except IntegrityError:
 
 ## Deployment Notes
 
-**Portainer deployment with nginx-proxy-manager**:
-- Application runs on port 5000 internally
+**Coolify deployment**:
+- Application runs on port 5000 internally; Coolify's Traefik proxy handles external routing and SSL
 - Data persists in Docker volume `dmarc-data`
-- Logs persists in Docker volume `logs`
+- Logs persist in Docker volume `logs`
 - Health check endpoint `/health` for monitoring (returns 200 when healthy, 503 when unhealthy)
 - Container name: `dmarc-analyzer`
-- Reverse proxy via nginx-proxy-manager for SSL/TLS and domain routing
+- Deploy as **Docker Compose** resource in Coolify, pointed at the Git repository
 
 **Security model**:
 - Container starts as root to fix Docker volume permissions
@@ -276,12 +283,11 @@ except IntegrityError:
 
 **Database migrations** run automatically via `entrypoint.sh` on container start.
 
-**Portainer setup**:
-- Deploy stack from Git repository in Portainer
-- Set required environment variables in stack configuration
-- nginx-proxy-manager handles SSL/TLS termination and domain routing
-- Use persistent storage for `/app/data` (database) and `/app/logs` volumes
-- See `PORTAINER_DEPLOYMENT.md` for detailed setup instructions
+**Coolify setup**:
+- Create Docker Compose resource in Coolify, connect Git repository
+- Set required environment variables in Coolify resource settings
+- Configure domain + port 5000 in Coolify; SSL via Let's Encrypt is automatic
+- See `COOLIFY_DEPLOYMENT.md` for detailed setup instructions
 
 ## Debugging Tips
 
@@ -291,8 +297,8 @@ except IntegrityError:
 4. **No alerts received**: Check alert criteria, throttling window (60 min), SMTP logs
 5. **Database errors**: Check volume permissions, SQLite file accessibility
 6. **Container crashes**: Check health endpoint, resource limits, logs
-7. **Portainer deployment issues**: Check Portainer logs, environment variables configuration, and volume mounts
-8. **nginx-proxy-manager issues**: Check proxy host configuration, SSL certificate status, and container network connectivity
+7. **Coolify deployment issues**: Check Coolify deployment logs, environment variables, and volume mounts
+8. **Domain not reachable**: Check domain/port configuration in Coolify and Traefik proxy status
 
 ## Future Enhancement Ideas
 

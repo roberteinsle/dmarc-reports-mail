@@ -9,7 +9,7 @@ Automated DMARC report processing with Claude AI analysis and email notification
 - **Claude AI Analysis**: Intelligent analysis using Anthropic's Claude API
 - **Alert System**: Email notifications for critical issues via AWS SES
 - **Web Dashboard**: Flask-based dashboard for visualization
-- **Docker-Ready**: Runs as container, deployed via Coolify
+- **Docker-Ready**: Runs as container, deployed via Coolify (Docker Compose from Git)
 - **SQLite Database**: Persistent storage of all reports and analyses
 
 ## Prerequisites
@@ -67,19 +67,11 @@ python run.py
 
 Dashboard: http://localhost:5000
 
-### Portainer Deployment (Production)
+### Coolify Deployment (Production)
 
-1. **Add Stack in Portainer**:
-   - Go to your Portainer dashboard
-   - Navigate to Stacks → Add stack
-   - Name: `dmarc-analyzer`
-   - Build method: **Repository**
-   - Repository URL: `https://github.com/roberteinsle/dmarc-reports-mail`
-   - Repository reference: `refs/heads/main`
-   - Compose path: `docker-compose.yaml`
+1. **Create new resource** in Coolify → **Docker Compose** → connect Git repository
 
-2. **Configure Environment Variables**:
-   Add the following environment variables in Portainer stack configuration:
+2. **Configure Environment Variables** in Coolify resource settings:
    ```env
    FLASK_ENV=production
    SECRET_KEY=<generate-secure-key>
@@ -108,23 +100,15 @@ Dashboard: http://localhost:5000
    LOG_LEVEL=INFO
    ```
 
-3. **Deploy Stack**:
-   - Click "Deploy the stack"
-   - Portainer will build and start the container
-   - Volumes are automatically created: `dmarc-data` and `logs`
-   - Container connects to `nginx-proxy-manager_default` network
+3. **Configure Domain**: Set domain and port `5000` in Coolify — SSL via Let's Encrypt is handled automatically
 
-4. **Configure nginx-proxy-manager**:
-   - Add proxy host pointing to `dmarc-analyzer:5000`
-   - Configure domain (e.g., `dmarc.yourdomain.com`)
-   - Enable SSL certificate (Let's Encrypt)
-   - nginx-proxy-manager handles SSL/TLS termination and domain routing
+4. **Deploy**: Coolify builds the image, creates volumes (`dmarc-data`, `logs`) and starts the container
 
 5. **Access Dashboard**:
    - Use your configured domain: `https://dmarc.yourdomain.com`
    - Health check: `https://dmarc.yourdomain.com/health`
 
-**For detailed deployment instructions, see [`PORTAINER_DEPLOYMENT.md`](PORTAINER_DEPLOYMENT.md)**
+**For detailed deployment instructions, see [`COOLIFY_DEPLOYMENT.md`](COOLIFY_DEPLOYMENT.md)**
 
 ### Local Docker Deployment (Development/Testing)
 
@@ -271,7 +255,7 @@ docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 ### Problem: Scheduler not running
 
 Solution:
-- Check logs in Portainer or via `docker-compose logs -f` (local)
+- Check logs in Coolify or via `docker-compose logs -f` (local)
 - Verify all environment variables are set correctly
 - Restart the service
 
@@ -297,22 +281,21 @@ Solution:
 - Note alert throttling (60-minute window per alert type)
 - Check logs for SMTP errors
 
-### Problem: Portainer deployment issues
+### Problem: Coolify deployment issues
 
 Solution:
-- Verify all required environment variables are set in Portainer stack
+- Verify all required environment variables are set in Coolify resource settings
 - Check that persistent volumes are properly created
-- Review Portainer deployment logs
+- Review Coolify deployment logs in the Deployments tab
 - Ensure health check endpoint `/health` is accessible
-- Verify container is connected to `nginx-proxy-manager_default` network
 
 ### Problem: Cannot access via domain
 
 Solution:
-- Check nginx-proxy-manager proxy host configuration
-- Verify SSL certificate is active
+- Check domain and port configuration in Coolify (port must be 5000)
+- Verify SSL certificate is active in Coolify
 - Ensure DNS points to correct server
-- Check that container is on the same network as nginx-proxy-manager
+- Check Coolify proxy (Traefik) status in Coolify settings
 
 ## Security Notes
 
@@ -329,7 +312,7 @@ This project is intended for private use.
 ## Support
 
 For issues:
-1. Check logs (Coolify dashboard or `docker-compose logs -f` for local)
+1. Check logs (Coolify → resource → Logs, or `docker-compose logs -f` for local)
 2. Check health endpoint (`/health`)
 3. Create GitHub issues: https://github.com/roberteinsle/dmarc-reports-mail/issues
 
