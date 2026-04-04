@@ -1,55 +1,56 @@
 # DMARC Reports Mail Analyzer
 
-Automated DMARC report processing with Claude AI analysis and email notifications.
+Automatische DMARC-Berichtsverarbeitung mit Claude-KI-Analyse und E-Mail-Benachrichtigungen.
 
-## Features
+## Funktionen
 
-- **Automatic IMAP Retrieval**: Fetches DMARC reports every 5 minutes from IMAP server
-- **XML Parsing**: Processes standard DMARC reports (XML, .gz, .zip)
-- **Claude AI Analysis**: Intelligent analysis using Anthropic's Claude API
-- **Alert System**: Email notifications for critical issues via AWS SES
-- **Web Dashboard**: Flask-based dashboard for visualization
-- **Docker-Ready**: Runs as container, deployed via Coolify (Docker Compose from Git)
-- **SQLite Database**: Persistent storage of all reports and analyses
+- **Automatischer IMAP-Abruf**: Ruft DMARC-Berichte alle 5 Minuten vom IMAP-Server ab
+- **XML-Parsing**: Verarbeitet Standard-DMARC-Berichte (XML, .gz, .zip)
+- **Claude-KI-Analyse**: Intelligente Analyse mit Anthropics Claude API (Ausgabe auf Deutsch)
+- **Warnsystem**: E-Mail-Benachrichtigungen bei kritischen Problemen über AWS SES
+- **Web-Dashboard**: Flask-basiertes Dashboard zur Visualisierung (komplett auf Deutsch)
+- **DKIM-Selektor-Tool**: Zeigt alle DKIM-Selektoren einer Domain mit DNS-Prüfung
+- **Docker-fähig**: Läuft als Container, deployed über Coolify (Docker Compose aus Git)
+- **SQLite-Datenbank**: Persistente Speicherung aller Berichte und Analysen
 
-## Prerequisites
+## Voraussetzungen
 
-- Python 3.11+ (for local development)
-- Docker & Docker Compose (for production)
-- IMAP access for DMARC reports
+- Python 3.11+ (für lokale Entwicklung)
+- Docker & Docker Compose (für Produktion)
+- IMAP-Zugang für DMARC-Berichte
 - Anthropic API Key (Claude AI)
-- AWS SES SMTP credentials (for alert emails)
+- AWS SES SMTP-Zugangsdaten (für Warn-E-Mails)
 
 ## Installation
 
-### Local Development
+### Lokale Entwicklung
 
-1. Clone repository:
+1. Repository klonen:
 ```bash
 git clone https://github.com/roberteinsle/dmarc-reports-mail.git
 cd dmarc-reports-mail
 ```
 
-2. Create virtual environment:
+2. Virtuelle Umgebung erstellen:
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# or
+# oder
 venv\Scripts\activate  # Windows
 ```
 
-3. Install dependencies:
+3. Abhängigkeiten installieren:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Create `.env` file:
+4. `.env`-Datei erstellen:
 ```bash
 cp .env.example .env
-# Edit .env and enter your credentials
+# .env bearbeiten und Zugangsdaten eintragen
 ```
 
-5. Initialize database:
+5. Datenbank initialisieren:
 ```bash
 python
 >>> from app import create_app
@@ -60,112 +61,112 @@ python
 >>> exit()
 ```
 
-6. Start application:
+6. Anwendung starten:
 ```bash
 python run.py
 ```
 
 Dashboard: http://localhost:5000
 
-### Coolify Deployment (Production)
+### Coolify-Deployment (Produktion)
 
-1. **Create new resource** in Coolify → **Docker Compose** → connect Git repository
+1. **Neue Ressource erstellen** in Coolify → **Docker Compose** → Git-Repository verbinden
 
-2. **Configure Environment Variables** in Coolify resource settings:
+2. **Umgebungsvariablen konfigurieren** in den Coolify-Ressourceneinstellungen:
    ```env
    FLASK_ENV=production
-   SECRET_KEY=<generate-secure-key>
+   SECRET_KEY=<sicheren-schlüssel-generieren>
    DATABASE_URL=sqlite:////app/data/dmarc_reports.db
 
-   # IMAP Configuration
-   IMAP_HOST=<your-imap-host>
+   # IMAP-Konfiguration
+   IMAP_HOST=<dein-imap-host>
    IMAP_PORT=993
-   IMAP_USER=<your-imap-user>
-   IMAP_PASSWORD=<your-imap-password>
+   IMAP_USER=<dein-imap-benutzer>
+   IMAP_PASSWORD=<dein-imap-passwort>
    IMAP_FOLDER=INBOX
 
    # Claude API
-   ANTHROPIC_API_KEY=<your-anthropic-api-key>
+   ANTHROPIC_API_KEY=<dein-anthropic-api-key>
 
    # AWS SES SMTP
-   SMTP_HOST=<your-smtp-host>
+   SMTP_HOST=<dein-smtp-host>
    SMTP_PORT=587
-   SMTP_USER=<your-smtp-user>
-   SMTP_PASSWORD=<your-smtp-password>
-   SMTP_FROM=<your-from-email>
-   ALERT_RECIPIENT=<alert-recipient-email>
+   SMTP_USER=<dein-smtp-benutzer>
+   SMTP_PASSWORD=<dein-smtp-passwort>
+   SMTP_FROM=<deine-absender-email>
+   ALERT_RECIPIENT=<empfänger-email>
 
    # Optional
    SCHEDULER_INTERVAL_MINUTES=5
    LOG_LEVEL=INFO
    ```
 
-3. **Configure Domain**: Set domain and port `5000` in Coolify — SSL via Let's Encrypt is handled automatically
+3. **Domain konfigurieren**: Domain und Port `5000` in Coolify setzen — SSL über Let's Encrypt wird automatisch eingerichtet
 
-4. **Deploy**: Coolify builds the image, creates volumes (`dmarc-data`, `logs`) and starts the container
+4. **Deployen**: Coolify baut das Image, erstellt Volumes (`dmarc-data`, `logs`) und startet den Container
 
-5. **Access Dashboard**:
-   - Use your configured domain: `https://dmarc.yourdomain.com`
-   - Health check: `https://dmarc.yourdomain.com/health`
+5. **Dashboard aufrufen**:
+   - Konfigurierte Domain verwenden: `https://dmarc.deinedomain.de`
+   - Health-Check: `https://dmarc.deinedomain.de/health`
 
-**For detailed deployment instructions, see [`COOLIFY_DEPLOYMENT.md`](COOLIFY_DEPLOYMENT.md)**
+**Detaillierte Deployment-Anleitung: [`COOLIFY_DEPLOYMENT.md`](COOLIFY_DEPLOYMENT.md)**
 
-### Local Docker Deployment (Development/Testing)
+### Lokales Docker-Deployment (Entwicklung/Test)
 
-1. Clone repository:
+1. Repository klonen:
 ```bash
 git clone https://github.com/roberteinsle/dmarc-reports-mail.git
 cd dmarc-reports-mail
 ```
 
-2. Create `.env` file:
+2. `.env`-Datei erstellen:
 ```bash
 cp .env.example .env
-# Edit .env and enter your credentials
+# .env bearbeiten und Zugangsdaten eintragen
 ```
 
-3. Build and start Docker container:
+3. Docker-Container bauen und starten:
 ```bash
 docker-compose build
 docker-compose up -d
 ```
 
-4. Check logs:
+4. Logs prüfen:
 ```bash
 docker-compose logs -f
 ```
 
-5. Open dashboard:
+5. Dashboard öffnen:
 ```
 http://localhost:5000
 ```
 
-6. Health check:
+6. Health-Check:
 ```
 http://localhost:5000/health
 ```
 
-## Configuration
+## Konfiguration
 
-All configuration is done via environment variables in the `.env` file:
+Die gesamte Konfiguration erfolgt über Umgebungsvariablen in der `.env`-Datei:
 
-### Required Environment Variables
+### Erforderliche Umgebungsvariablen
 
 ```env
-# IMAP Configuration
+# IMAP-Konfiguration
 IMAP_HOST=mail.einsle.cloud
 IMAP_PORT=993
 IMAP_USER=dmarc-reports@einsle.cloud
-IMAP_PASSWORD=<your-password>
+IMAP_PASSWORD=<dein-passwort>
 
 # Claude API
-ANTHROPIC_API_KEY=<your-anthropic-api-key>
+ANTHROPIC_API_KEY=<dein-anthropic-api-key>
 
 # AWS SES SMTP
 SMTP_HOST=email-smtp.eu-central-1.amazonaws.com
 SMTP_PORT=587
-SMTP_USER=<your-ses-smtp-user>
-SMTP_PASSWORD=<your-ses-smtp-password>
+SMTP_USER=<dein-ses-smtp-benutzer>
+SMTP_PASSWORD=<dein-ses-smtp-passwort>
 SMTP_FROM=dmarc-reports@einsle.cloud
 ALERT_RECIPIENT=robert@einsle.com
 
@@ -174,52 +175,53 @@ SCHEDULER_INTERVAL_MINUTES=5
 LOG_LEVEL=INFO
 ```
 
-## Usage
+## Nutzung
 
 ### Dashboard
 
-- **/**  - Overview with statistics
-- **/reports** - List of all processed reports
-- **/reports/<id>** - Detail view of a report
-- **/alerts** - Alert history with filtering
-- **/health** - Health check endpoint
+- **/** - Übersicht mit Statistiken
+- **/reports** - Liste aller verarbeiteten Berichte
+- **/reports/<id>** - Detailansicht eines Berichts
+- **/alerts** - Warnungsverlauf mit Filterung
+- **/tools/dkim-selectors** - DKIM-Selektor-Abfrage mit DNS-Status
+- **/health** - Health-Check-Endpunkt
 
-### API Endpoints
+### API-Endpunkte
 
-- `GET /api/stats` - JSON statistics for charts
-- `GET /health` - Health status (200 = healthy, 503 = unhealthy)
+- `GET /api/stats` - JSON-Statistiken für Diagramme
+- `GET /health` - Health-Status (200 = gesund, 503 = ungesund)
 
-### Alert Criteria
+### Warnungskriterien
 
-Alerts are automatically sent when:
+Warnungen werden automatisch gesendet bei:
 
-1. **DMARC Failures**: Emails with disposition = quarantine/reject
-2. **SPF Failures**: > 5 emails with SPF fail
-3. **DKIM Failures**: > 5 emails with DKIM fail
-4. **Unauthorized Senders**: Unknown sources identified by Claude AI
-5. **Anomalies**: Suspicious patterns detected by Claude AI
+1. **DMARC-Fehler**: E-Mails mit Disposition = quarantine/reject
+2. **SPF-Fehler**: > 5 E-Mails mit SPF-Fehler
+3. **DKIM-Fehler**: > 5 E-Mails mit DKIM-Fehler
+4. **Nicht autorisierte Absender**: Unbekannte Quellen, identifiziert durch Claude KI
+5. **Anomalien**: Verdächtige Muster, erkannt durch Claude KI
 
-## Testing
+## Tests
 
-Run tests:
+Tests ausführen:
 ```bash
 pytest
 ```
 
-With coverage:
+Mit Coverage:
 ```bash
 pytest --cov=app --cov-report=html
 ```
 
 ## Monitoring
 
-### Health Check
+### Health-Check
 
 ```bash
-curl http://localhost:3551/health
+curl http://localhost:5000/health
 ```
 
-Response:
+Antwort:
 ```json
 {
   "status": "healthy",
@@ -231,91 +233,91 @@ Response:
 
 ### Logs
 
-Logs are located in `logs/`:
-- `app.log` - All application events
-- `error.log` - Only errors and critical
+Logs befinden sich in `logs/`:
+- `app.log` - Alle Anwendungsereignisse
+- `error.log` - Nur Fehler und kritische Meldungen
 
 In Docker:
 ```bash
 docker-compose logs -f
 ```
 
-### Database Backup
+### Datenbank-Backup
 
-SQLite database is located in Docker volume `dmarc-data`.
+Die SQLite-Datenbank befindet sich im Docker-Volume `dmarc-data`.
 
-Create backup:
+Backup erstellen:
 ```bash
 docker exec dmarc-analyzer sqlite3 /app/data/dmarc_reports.db ".backup /app/data/backup.db"
 docker cp dmarc-analyzer:/app/data/backup.db ./backup_$(date +%Y%m%d).db
 ```
 
-## Troubleshooting
+## Fehlerbehebung
 
-### Problem: Scheduler not running
+### Problem: Scheduler läuft nicht
 
-Solution:
-- Check logs in Coolify or via `docker-compose logs -f` (local)
-- Verify all environment variables are set correctly
-- Restart the service
+Lösung:
+- Logs in Coolify oder via `docker-compose logs -f` (lokal) prüfen
+- Alle Umgebungsvariablen korrekt gesetzt?
+- Dienst neustarten
 
-### Problem: IMAP connection fails
+### Problem: IMAP-Verbindung schlägt fehl
 
-Solution:
-- Check IMAP credentials in environment variables
-- Verify IMAP server connectivity
-- Check logs for specific error messages
+Lösung:
+- IMAP-Zugangsdaten in Umgebungsvariablen prüfen
+- IMAP-Server-Verbindung überprüfen
+- Logs auf spezifische Fehlermeldungen prüfen
 
-### Problem: Claude API errors
+### Problem: Claude-API-Fehler
 
-Solution:
-- Verify API key in environment variables
-- Check rate limits (app has retry logic with exponential backoff)
-- Check Anthropic status page
+Lösung:
+- API-Key in Umgebungsvariablen überprüfen
+- Rate-Limits prüfen (App hat Retry-Logik mit exponentiellem Backoff)
+- Anthropic-Statusseite prüfen
 
-### Problem: Not receiving alerts
+### Problem: Keine Warnungen erhalten
 
-Solution:
-- Check SMTP credentials in environment variables
-- Verify alert criteria configuration
-- Note alert throttling (60-minute window per alert type)
-- Check logs for SMTP errors
+Lösung:
+- SMTP-Zugangsdaten in Umgebungsvariablen prüfen
+- Warnungskriterien-Konfiguration überprüfen
+- Warnung-Drosselung beachten (60-Minuten-Fenster pro Warnungstyp)
+- Logs auf SMTP-Fehler prüfen
 
-### Problem: Coolify deployment issues
+### Problem: Coolify-Deployment-Probleme
 
-Solution:
-- Verify all required environment variables are set in Coolify resource settings
-- Check that persistent volumes are properly created
-- Review Coolify deployment logs in the Deployments tab
-- Ensure health check endpoint `/health` is accessible
+Lösung:
+- Alle erforderlichen Umgebungsvariablen in Coolify-Ressourceneinstellungen gesetzt?
+- Persistente Volumes korrekt erstellt?
+- Coolify-Deployment-Logs im Deployments-Tab prüfen
+- Health-Check-Endpunkt `/health` erreichbar?
 
-### Problem: Cannot access via domain
+### Problem: Domain nicht erreichbar
 
-Solution:
-- Check domain and port configuration in Coolify (port must be 5000)
-- Verify SSL certificate is active in Coolify
-- Ensure DNS points to correct server
-- Check Coolify proxy (Traefik) status in Coolify settings
+Lösung:
+- Domain- und Port-Konfiguration in Coolify prüfen (Port muss 5000 sein)
+- SSL-Zertifikat in Coolify aktiv?
+- DNS zeigt auf den richtigen Server?
+- Coolify-Proxy (Traefik) Status in Coolify-Einstellungen prüfen
 
-## Security Notes
+## Sicherheitshinweise
 
-- **NEVER** commit `.env` file!
-- **NEVER** hardcode real credentials in code!
-- Regularly update Docker images
-- Use strong passwords
-- IMAP/SMTP only over encrypted connections (SSL/TLS)
+- `.env`-Datei **NIEMALS** committen!
+- Echte Zugangsdaten **NIEMALS** im Code hartcodieren!
+- Docker-Images regelmäßig aktualisieren
+- Starke Passwörter verwenden
+- IMAP/SMTP nur über verschlüsselte Verbindungen (SSL/TLS)
 
-## License
+## Lizenz
 
-This project is intended for private use.
+Dieses Projekt ist für den privaten Gebrauch bestimmt.
 
 ## Support
 
-For issues:
-1. Check logs (Coolify → resource → Logs, or `docker-compose logs -f` for local)
-2. Check health endpoint (`/health`)
-3. Create GitHub issues: https://github.com/roberteinsle/dmarc-reports-mail/issues
+Bei Problemen:
+1. Logs prüfen (Coolify → Ressource → Logs, oder `docker-compose logs -f` für lokal)
+2. Health-Endpunkt prüfen (`/health`)
+3. GitHub-Issues erstellen: https://github.com/roberteinsle/dmarc-reports-mail/issues
 
-## Developer
+## Entwickler
 
 Robert Einsle (robert@einsle.com)

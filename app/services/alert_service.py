@@ -157,7 +157,7 @@ class AlertService:
             return False
 
     def _format_alert_html(self, alert_data: Dict) -> str:
-        """Format alert as HTML email."""
+        """Format alert as HTML email (German)."""
         severity = alert_data['severity']
         severity_color = {
             'low': '#28a745',
@@ -165,6 +165,13 @@ class AlertService:
             'high': '#fd7e14',
             'critical': '#dc3545'
         }.get(severity, '#6c757d')
+
+        severity_label = {
+            'low': 'NIEDRIG',
+            'medium': 'MITTEL',
+            'high': 'HOCH',
+            'critical': 'KRITISCH'
+        }.get(severity, severity.upper())
 
         alerts_html = ''
         for alert in alert_data.get('alerts', []):
@@ -177,14 +184,14 @@ class AlertService:
 
         recommendations_html = ''
         if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('recommendations'):
-            recommendations_html = '<h3>Recommendations:</h3><ul>'
+            recommendations_html = '<h3>Empfehlungen:</h3><ul>'
             for rec in alert_data['claude_analysis']['recommendations']:
                 recommendations_html += f'<li>{rec}</li>'
             recommendations_html += '</ul>'
 
         html = f"""
         <!DOCTYPE html>
-        <html>
+        <html lang="de">
         <head>
             <style>
                 body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
@@ -196,10 +203,10 @@ class AlertService:
         <body>
             <div class="header">
                 <h2>{alert_data['title']}</h2>
-                <span class="severity">{severity.upper()}</span>
+                <span class="severity">{severity_label}</span>
             </div>
             <div class="content">
-                <h3>Issues Detected:</h3>
+                <h3>Erkannte Probleme:</h3>
                 <ul>
                     {alerts_html}
                 </ul>
@@ -209,8 +216,8 @@ class AlertService:
                 <hr>
                 <p><small>
                     Domain: {alert_data.get('report_data', {}).get('policy_domain', 'N/A')}<br>
-                    Reporter: {alert_data.get('report_data', {}).get('org_name', 'N/A')}<br>
-                    Report ID: {alert_data.get('report_data', {}).get('report_id', 'N/A')}
+                    Absender: {alert_data.get('report_data', {}).get('org_name', 'N/A')}<br>
+                    Bericht-ID: {alert_data.get('report_data', {}).get('report_id', 'N/A')}
                 </small></p>
             </div>
         </body>
@@ -219,26 +226,33 @@ class AlertService:
         return html
 
     def _format_alert_text(self, alert_data: Dict) -> str:
-        """Format alert as plain text email."""
-        text = f"""DMARC ALERT - {alert_data['severity'].upper()}
+        """Format alert as plain text email (German)."""
+        severity_label = {
+            'low': 'NIEDRIG',
+            'medium': 'MITTEL',
+            'high': 'HOCH',
+            'critical': 'KRITISCH'
+        }.get(alert_data['severity'], alert_data['severity'].upper())
+
+        text = f"""DMARC-WARNUNG - {severity_label}
 
 {alert_data['title']}
 
-Issues Detected:
+Erkannte Probleme:
 """
         for alert in alert_data.get('alerts', []):
             text += f"\n- {alert['type'].replace('_', ' ').title()}:\n  {alert['message']}\n"
 
         if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('recommendations'):
-            text += "\nRecommendations:\n"
+            text += "\nEmpfehlungen:\n"
             for rec in alert_data['claude_analysis']['recommendations']:
                 text += f"- {rec}\n"
 
         text += f"""
 ---
 Domain: {alert_data.get('report_data', {}).get('policy_domain', 'N/A')}
-Reporter: {alert_data.get('report_data', {}).get('org_name', 'N/A')}
-Report ID: {alert_data.get('report_data', {}).get('report_id', 'N/A')}
+Absender: {alert_data.get('report_data', {}).get('org_name', 'N/A')}
+Bericht-ID: {alert_data.get('report_data', {}).get('report_id', 'N/A')}
 """
         return text
 

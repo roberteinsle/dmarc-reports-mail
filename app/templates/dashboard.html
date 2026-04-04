@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>DMARC Reports Dashboard</h1>
     <button id="triggerProcessing" class="btn btn-primary">
-        <i class="bi bi-arrow-clockwise"></i> Process Reports Now
+        <i class="bi bi-arrow-clockwise"></i> Berichte jetzt verarbeiten
     </button>
 </div>
 
@@ -14,7 +14,7 @@
     <div class="col-md-4">
         <div class="card text-white bg-primary">
             <div class="card-body">
-                <h5 class="card-title">Total Reports</h5>
+                <h5 class="card-title">Berichte gesamt</h5>
                 <h2>{{ total_reports }}</h2>
             </div>
         </div>
@@ -22,7 +22,7 @@
     <div class="col-md-4">
         <div class="card text-white bg-warning">
             <div class="card-body">
-                <h5 class="card-title">Alerts Sent</h5>
+                <h5 class="card-title">Warnungen gesendet</h5>
                 <h2>{{ total_alerts }}</h2>
             </div>
         </div>
@@ -30,7 +30,7 @@
     <div class="col-md-4">
         <div class="card text-white bg-success">
             <div class="card-body">
-                <h5 class="card-title">Pass Rate</h5>
+                <h5 class="card-title">Erfolgsrate</h5>
                 <h2>{{ pass_rate }}%</h2>
             </div>
         </div>
@@ -41,16 +41,16 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>Recent Reports</h5>
+                <h5>Letzte Berichte</h5>
             </div>
             <div class="card-body">
                 <table class="table table-sm">
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>Reporter</th>
+                            <th>Absender</th>
                             <th>Status</th>
-                            <th>Date</th>
+                            <th>Datum</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,7 +59,7 @@
                             <td><a href="/reports/{{ report.id }}">{{ report.domain }}</a></td>
                             <td>{{ report.org_name }}</td>
                             <td><span class="badge bg-{{ 'success' if report.status == 'processed' else 'warning' }}">{{ report.status }}</span></td>
-                            <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ report.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -71,15 +71,15 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>Recent Alerts</h5>
+                <h5>Letzte Warnungen</h5>
             </div>
             <div class="card-body">
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Type</th>
-                            <th>Severity</th>
-                            <th>Date</th>
+                            <th>Typ</th>
+                            <th>Schweregrad</th>
+                            <th>Datum</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,7 +87,7 @@
                         <tr>
                             <td>{{ alert.alert_type }}</td>
                             <td><span class="badge severity-{{ alert.severity }}">{{ alert.severity }}</span></td>
-                            <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ alert.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -101,7 +101,7 @@
 document.getElementById('triggerProcessing').addEventListener('click', function() {
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verarbeitung...';
 
     fetch('/api/trigger-processing', {
         method: 'POST',
@@ -112,18 +112,18 @@ document.getElementById('triggerProcessing').addEventListener('click', function(
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            alert('✓ Report processing started successfully!\n\nCheck the logs or refresh the page in a moment to see new reports.');
+            alert('Berichtverarbeitung erfolgreich gestartet!\n\nSeite wird in wenigen Sekunden aktualisiert.');
             setTimeout(() => location.reload(), 3000);
         } else {
-            alert('✗ Error: ' + data.message);
+            alert('Fehler: ' + data.message);
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Process Reports Now';
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Berichte jetzt verarbeiten';
         }
     })
     .catch(error => {
-        alert('✗ Network error: ' + error);
+        alert('Netzwerkfehler: ' + error);
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Process Reports Now';
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Berichte jetzt verarbeiten';
     });
 });
 </script>

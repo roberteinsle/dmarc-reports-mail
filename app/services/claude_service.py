@@ -129,57 +129,57 @@ class ClaudeService:
         if len(records_data) > 10:
             records_text += f"\n  ... and {len(records_data) - 10} more records"
 
-        prompt = f"""You are a DMARC security analyst. Analyze this DMARC report and provide detailed, actionable recommendations.
+        prompt = f"""Du bist ein DMARC-Sicherheitsanalyst. Analysiere diesen DMARC-Bericht und gib detaillierte, umsetzbare Empfehlungen auf Deutsch.
 
-Report Summary:
+Berichtzusammenfassung:
 - Domain: {report_data.get('policy_domain', 'N/A')}
-- Reporter: {report_data.get('org_name', 'N/A')}
-- Total emails: {total_emails}
-- SPF failures: {spf_failures}
-- DKIM failures: {dkim_failures}
-- Quarantined: {quarantined}
-- Rejected: {rejected}
+- Absender: {report_data.get('org_name', 'N/A')}
+- E-Mails gesamt: {total_emails}
+- SPF-Fehler: {spf_failures}
+- DKIM-Fehler: {dkim_failures}
+- Quarantäne: {quarantined}
+- Abgelehnt: {rejected}
 
-Records (top {min(10, len(records_data))} of {len(records_data)}):
+Datensätze (Top {min(10, len(records_data))} von {len(records_data)}):
 {records_text}
 
-Policy:
-- DKIM alignment: {report_data.get('policy_adkim', 'N/A')}
-- SPF alignment: {report_data.get('policy_aspf', 'N/A')}
+Richtlinie:
+- DKIM-Alignment: {report_data.get('policy_adkim', 'N/A')}
+- SPF-Alignment: {report_data.get('policy_aspf', 'N/A')}
 - Policy: {report_data.get('policy_p', 'N/A')}
 
-Provide analysis in JSON format with the following structure:
+Antworte auf Deutsch im JSON-Format mit folgender Struktur:
 {{
-  "summary": "Brief overview of findings (2-3 sentences)",
+  "summary": "Kurze Zusammenfassung der Ergebnisse (2-3 Sätze)",
   "severity": "low|medium|high|critical",
-  "failures": ["Detailed authentication failures with IP, reason, and impact"],
-  "unauthorized_sources": ["Unauthorized IPs/sources with explanation"],
-  "anomalies": ["Suspicious patterns with context"],
-  "recommendations": ["General recommendations"],
+  "failures": ["Detaillierte Authentifizierungsfehler mit IP, Grund und Auswirkung"],
+  "unauthorized_sources": ["Nicht autorisierte IPs/Quellen mit Erklärung"],
+  "anomalies": ["Verdächtige Muster mit Kontext"],
+  "recommendations": ["Allgemeine Empfehlungen"],
   "action_items": [
     {{
       "priority": "critical|high|medium|low",
-      "title": "Brief action title",
-      "description": "What to do and why",
-      "steps": ["Step 1", "Step 2", "..."],
-      "affected_ips": ["IP addresses if applicable"],
-      "expected_outcome": "What should happen after this action"
+      "title": "Kurzer Handlungstitel",
+      "description": "Was zu tun ist und warum",
+      "steps": ["Schritt 1", "Schritt 2", "..."],
+      "affected_ips": ["Betroffene IP-Adressen falls zutreffend"],
+      "expected_outcome": "Erwartetes Ergebnis nach dieser Maßnahme"
     }}
   ],
-  "positive_findings": ["Things that are working correctly - mention these to provide balanced feedback"],
-  "next_steps": ["Immediate next steps in order of priority"]
+  "positive_findings": ["Was gut funktioniert - für ein ausgewogenes Feedback"],
+  "next_steps": ["Sofortige nächste Schritte nach Priorität"]
 }}
 
-**Important Guidelines:**
-1. Be specific - mention exact IPs, counts, and values
-2. Prioritize action items: critical (immediate action needed), high (action within 24h), medium (action within week), low (monitor)
-3. Provide concrete steps, not vague suggestions
-4. Include positive findings to acknowledge what's working well
-5. Mention expected outcomes for each action
-6. If everything is normal, still provide monitoring and best practice recommendations
-7. Consider business context - some "failures" might be expected (forwarding, mailing lists, etc.)
+**Wichtige Richtlinien:**
+1. Sei spezifisch - nenne genaue IPs, Anzahlen und Werte
+2. Priorisiere Handlungsempfehlungen: critical (sofortiger Handlungsbedarf), high (innerhalb 24h), medium (innerhalb einer Woche), low (beobachten)
+3. Gib konkrete Schritte an, keine vagen Vorschläge
+4. Erwähne auch positive Befunde, um anzuerkennen was gut funktioniert
+5. Nenne erwartete Ergebnisse für jede Maßnahme
+6. Auch wenn alles normal ist, gib Monitoring- und Best-Practice-Empfehlungen
+7. Berücksichtige den geschäftlichen Kontext - manche "Fehler" können erwartet sein (Weiterleitungen, Mailinglisten, etc.)
 
-Focus on actionable insights that a system administrator can implement immediately."""
+Konzentriere dich auf umsetzbare Erkenntnisse, die ein Systemadministrator sofort umsetzen kann. Antworte komplett auf Deutsch."""
 
         return prompt
 

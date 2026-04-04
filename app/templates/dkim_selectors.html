@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}DKIM Selectors - DMARC Reports Mail{% endblock %}
+{% block title %}DKIM-Selektoren - DMARC Reports Mail{% endblock %}
 
 {% block content %}
-<h1>DKIM Selector Lookup</h1>
-<p class="text-muted">Lists all DKIM selectors seen in processed reports for a domain and checks their current DNS status.</p>
+<h1>DKIM-Selektor-Abfrage</h1>
+<p class="text-muted">Zeigt alle DKIM-Selektoren aus verarbeiteten Berichten für eine Domain und prüft deren aktuellen DNS-Status.</p>
 
 <div class="card mt-4">
     <div class="card-body">
@@ -13,19 +13,19 @@
                 <label for="domain" class="form-label">Domain</label>
                 {% if all_domains %}
                 <select name="domain" id="domain" class="form-select">
-                    <option value="">-- Select domain --</option>
+                    <option value="">-- Domain auswählen --</option>
                     {% for d in all_domains %}
                     <option value="{{ d }}" {{ 'selected' if d == domain else '' }}>{{ d }}</option>
                     {% endfor %}
                 </select>
                 {% else %}
                 <input type="text" name="domain" id="domain" class="form-control"
-                       placeholder="example.com" value="{{ domain }}">
+                       placeholder="beispiel.de" value="{{ domain }}">
                 {% endif %}
             </div>
             <div class="col-md-auto">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> Look up selectors
+                    <i class="bi bi-search"></i> Selektoren abfragen
                 </button>
             </div>
         </form>
@@ -35,8 +35,8 @@
 {% if domain %}
 <div class="card mt-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">DKIM Selectors for <strong>{{ domain }}</strong></h5>
-        <span class="badge bg-secondary">{{ results|length }} selector(s)</span>
+        <h5 class="mb-0">DKIM-Selektoren für <strong>{{ domain }}</strong></h5>
+        <span class="badge bg-secondary">{{ results|length }} Selektor(en)</span>
     </div>
     <div class="card-body">
         {% if results %}
@@ -44,11 +44,11 @@
             <table class="table table-hover">
                 <thead class="table-light">
                     <tr>
-                        <th>Selector</th>
-                        <th>DKIM Domain</th>
-                        <th>Emails seen</th>
-                        <th>DNS Status</th>
-                        <th>DNS Record</th>
+                        <th>Selektor</th>
+                        <th>DKIM-Domain</th>
+                        <th>E-Mails gesehen</th>
+                        <th>DNS-Status</th>
+                        <th>DNS-Eintrag</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,20 +59,20 @@
                         <td><strong>{{ r.total_emails }}</strong></td>
                         <td>
                             {% if r.dns_status == 'active' %}
-                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Aktiv</span>
                             {% elif r.dns_status == 'not_found' %}
-                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Not found</span>
+                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Nicht gefunden</span>
                             {% elif r.dns_status == 'no_answer' %}
-                            <span class="badge bg-warning text-dark"><i class="bi bi-question-circle"></i> No TXT record</span>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-question-circle"></i> Kein TXT-Eintrag</span>
                             {% else %}
-                            <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Error</span>
+                            <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Fehler</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if r.dns_record %}
                             <small><code style="word-break: break-all;">{{ r.dns_record[:120] }}{% if r.dns_record|length > 120 %}…{% endif %}</code></small>
                             {% else %}
-                            <span class="text-muted">—</span>
+                            <span class="text-muted">&mdash;</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -82,7 +82,7 @@
         </div>
         {% else %}
         <div class="alert alert-info">
-            No DKIM selectors found in reports for <strong>{{ domain }}</strong>.
+            Keine DKIM-Selektoren in Berichten für <strong>{{ domain }}</strong> gefunden.
         </div>
         {% endif %}
     </div>
@@ -90,6 +90,6 @@
 {% endif %}
 
 <div class="mt-3">
-    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+    <a href="/" class="btn btn-secondary">Zurück zum Dashboard</a>
 </div>
 {% endblock %}

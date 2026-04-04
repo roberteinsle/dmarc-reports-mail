@@ -1,23 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Alerts - DMARC Reports Mail{% endblock %}
+{% block title %}Warnungen - DMARC Reports Mail{% endblock %}
 
 {% block content %}
-<h1>Alert History</h1>
+<h1>Warnungsverlauf</h1>
 
 <div class="card mt-4">
     <div class="card-header">
         <div class="row">
             <div class="col-md-6">
-                <h5>Alerts</h5>
+                <h5>Warnungen</h5>
             </div>
             <div class="col-md-6">
                 <select class="form-select form-select-sm" onchange="window.location.href='/alerts?severity=' + this.value">
-                    <option value="">All Severities</option>
-                    <option value="low" {{ 'selected' if severity_filter == 'low' else '' }}>Low</option>
-                    <option value="medium" {{ 'selected' if severity_filter == 'medium' else '' }}>Medium</option>
-                    <option value="high" {{ 'selected' if severity_filter == 'high' else '' }}>High</option>
-                    <option value="critical" {{ 'selected' if severity_filter == 'critical' else '' }}>Critical</option>
+                    <option value="">Alle Schweregrade</option>
+                    <option value="low" {{ 'selected' if severity_filter == 'low' else '' }}>Niedrig</option>
+                    <option value="medium" {{ 'selected' if severity_filter == 'medium' else '' }}>Mittel</option>
+                    <option value="high" {{ 'selected' if severity_filter == 'high' else '' }}>Hoch</option>
+                    <option value="critical" {{ 'selected' if severity_filter == 'critical' else '' }}>Kritisch</option>
                 </select>
             </div>
         </div>
@@ -27,12 +27,12 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Type</th>
-                    <th>Severity</th>
-                    <th>Title</th>
-                    <th>Email Sent</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th>Typ</th>
+                    <th>Schweregrad</th>
+                    <th>Titel</th>
+                    <th>E-Mail gesendet</th>
+                    <th>Erstellt</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,11 +42,11 @@
                     <td>{{ alert.alert_type }}</td>
                     <td><span class="badge severity-{{ alert.severity }}">{{ alert.severity }}</span></td>
                     <td>{{ alert.title }}</td>
-                    <td>{{ 'Yes' if alert.email_sent else 'No' }}</td>
-                    <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ 'Ja' if alert.email_sent else 'Nein' }}</td>
+                    <td>{{ alert.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                     <td>
                         {% if alert.report_id %}
-                        <a href="/reports/{{ alert.report_id }}" class="btn btn-sm btn-primary">View Report</a>
+                        <a href="/reports/{{ alert.report_id }}" class="btn btn-sm btn-primary">Bericht ansehen</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -58,7 +58,7 @@
         <nav>
             <ul class="pagination">
                 {% if pagination.has_prev %}
-                <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Previous</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Zurück</a></li>
                 {% endif %}
 
                 {% for page in pagination.iter_pages() %}
@@ -70,7 +70,7 @@
                 {% endfor %}
 
                 {% if pagination.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Next</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}{% if severity_filter %}&severity={{ severity_filter }}{% endif %}">Weiter</a></li>
                 {% endif %}
             </ul>
         </nav>
