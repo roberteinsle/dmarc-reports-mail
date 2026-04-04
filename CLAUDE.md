@@ -140,12 +140,23 @@ Die Anwendung folgt diesem Ablauf alle 5 Minuten (orchestriert durch `scheduler_
 - ANTHROPIC_API_KEY
 - SMTP_HOST, SMTP_USER, SMTP_PASSWORD
 - ALERT_RECIPIENT
+- AUTH_EMAIL
 
 Alle Zugangsdaten über `.env`-Datei (Entwicklung) oder Docker ENV-Variablen (Produktion) - **NIEMALS hartcodiert**.
 
+### Authentifizierung (Magic Link)
+
+Die App ist per Magic-Link-Authentifizierung geschützt (`app/auth.py`):
+- Benutzer gibt E-Mail ein → wenn sie mit `AUTH_EMAIL` übereinstimmt, wird ein Anmelde-Link per SMTP gesendet
+- Token wird mit `itsdangerous.URLSafeTimedSerializer` generiert (15 Min. gültig)
+- Nach Klick auf den Link wird eine Flask-Session erstellt (7 Tage gültig)
+- Alle Routen sind geschützt außer `/health`, `/auth/*` und `/static/`
+- `before_request`-Hook in `app/__init__.py` prüft die Session
+- Anti-Enumeration: Bei ungültiger E-Mail wird trotzdem "E-Mail prüfen" angezeigt
+
 ### Web-Dashboard
 
-**Routen** (`app/routes/dashboard.py`):
+**Routen** (`app/routes/dashboard.py`) — alle geschützt per Magic-Link-Auth:
 - `/` - Dashboard-Übersicht mit Statistik-Karten und manuellem Auslöser
 - `/reports` - Paginierte Berichtsliste mit Schweregrad-Spalte
 - `/reports/<id>` - Detailansicht eines Berichts mit Claude-Analyse
@@ -153,7 +164,12 @@ Alle Zugangsdaten über `.env`-Datei (Entwicklung) oder Docker ENV-Variablen (Pr
 - `/tools/dkim-selectors` - DKIM-Selektor-Abfrage mit DNS-Prüfung
 - `/api/stats` - JSON-Endpunkt für Diagrammdaten
 - `/api/trigger-processing` - POST-Endpunkt zum manuellen Auslösen der Verarbeitung
-- `/health` - Health-Check (200=gesund, 503=ungesund)
+- `/health` - Health-Check (200=gesund, 503=ungesund) — **ohne Auth**
+
+**Auth-Routen** (`app/auth.py`):
+- `/auth/login` - Anmeldeseite (E-Mail eingeben)
+- `/auth/verify?token=...` - Magic-Link-Verifizierung
+- `/auth/logout` - Abmelden
 
 **Templates** verwenden Bootstrap 5 mit benutzerdefinierter Schweregrad-Farbgebung. **Die gesamte UI ist auf Deutsch.**
 
@@ -196,6 +212,7 @@ Alle Zugangsdaten über `.env`-Datei (Entwicklung) oder Docker ENV-Variablen (Pr
 
 - **Konfiguration**: `app/config.py`, `.env.example`
 - **Datenbankmodelle**: `app/models/database.py`
+- **Authentifizierung**: `app/auth.py`
 - **Kern-Services**: `app/services/{imap,parser,claude,alert,scheduler}_service.py`
 - **Routen**: `app/routes/dashboard.py`
 - **Templates**: `app/templates/*.html`
@@ -216,6 +233,7 @@ Alle Zugangsdaten über `.env`-Datei (Entwicklung) oder Docker ENV-Variablen (Pr
 4. **Logging**: Niemals Passwörter/API-Keys loggen. Sensible Daten in Fehlermeldungen reduzieren
 5. **IMAP/SMTP**: Immer SSL/TLS (Port 993) und STARTTLS (Port 587) verwenden
 6. **Flask Security Headers**: Gesetzt in `app/__init__.py` (X-Frame-Options, X-XSS-Protection, etc.)
+7. **Authentifizierung**: Magic-Link per E-Mail, Session-basiert, Anti-Enumeration bei Login
 
 ## Fehlerbehandlungsmuster
 

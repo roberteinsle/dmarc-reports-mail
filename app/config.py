@@ -42,6 +42,9 @@ class Config:
     # Scheduler Configuration
     SCHEDULER_INTERVAL_MINUTES = int(os.getenv('SCHEDULER_INTERVAL_MINUTES', 5))
 
+    # Authentication
+    AUTH_EMAIL = os.getenv('AUTH_EMAIL')
+
     # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
@@ -57,6 +60,7 @@ class Config:
             'SMTP_USER': Config.SMTP_USER,
             'SMTP_PASSWORD': Config.SMTP_PASSWORD,
             'ALERT_RECIPIENT': Config.ALERT_RECIPIENT,
+            'AUTH_EMAIL': Config.AUTH_EMAIL,
         }
 
         missing = [var for var, value in required_vars.items() if not value]

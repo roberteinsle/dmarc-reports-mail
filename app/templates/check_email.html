@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}E-Mail prüfen - DMARC Reports Mail{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-envelope-check" style="font-size: 3rem; color: #0d6efd;"></i>
+                <h4 class="mt-3">E-Mail prüfen</h4>
+                <p class="text-muted">
+                    Falls die E-Mail-Adresse korrekt ist, wurde ein Anmelde-Link gesendet.<br>
+                    Der Link ist 15 Minuten gültig.
+                </p>
+                <a href="/auth/login" class="btn btn-outline-secondary mt-3">
+                    Zurück zur Anmeldung
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

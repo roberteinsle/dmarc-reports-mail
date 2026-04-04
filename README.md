@@ -10,6 +10,7 @@ Automatische DMARC-Berichtsverarbeitung mit Claude-KI-Analyse und E-Mail-Benachr
 - **Warnsystem**: E-Mail-Benachrichtigungen bei kritischen Problemen über AWS SES
 - **Web-Dashboard**: Flask-basiertes Dashboard zur Visualisierung (komplett auf Deutsch)
 - **DKIM-Selektor-Tool**: Zeigt alle DKIM-Selektoren einer Domain mit DNS-Prüfung
+- **Magic-Link-Authentifizierung**: Passwortloser Login per E-Mail-Link
 - **Docker-fähig**: Läuft als Container, deployed über Coolify (Docker Compose aus Git)
 - **SQLite-Datenbank**: Persistente Speicherung aller Berichte und Analysen
 
@@ -96,6 +97,9 @@ Dashboard: http://localhost:5000
    SMTP_FROM=<deine-absender-email>
    ALERT_RECIPIENT=<empfänger-email>
 
+   # Authentifizierung (Magic Link)
+   AUTH_EMAIL=<deine-login-email>
+
    # Optional
    SCHEDULER_INTERVAL_MINUTES=5
    LOG_LEVEL=INFO
@@ -170,12 +174,24 @@ SMTP_PASSWORD=<dein-ses-smtp-passwort>
 SMTP_FROM=dmarc-reports@einsle.cloud
 ALERT_RECIPIENT=robert@einsle.com
 
+# Authentifizierung (Magic Link)
+AUTH_EMAIL=robert@einsle.com
+
 # Optional
 SCHEDULER_INTERVAL_MINUTES=5
 LOG_LEVEL=INFO
 ```
 
 ## Nutzung
+
+### Authentifizierung
+
+Die App ist per Magic-Link geschützt. Der Ablauf:
+
+1. Dashboard öffnen → Anmeldeseite wird angezeigt
+2. E-Mail-Adresse eingeben (muss mit `AUTH_EMAIL` übereinstimmen)
+3. Anmelde-Link per E-Mail erhalten (15 Minuten gültig)
+4. Link klicken → eingeloggt (Session gültig für 7 Tage)
 
 ### Dashboard
 

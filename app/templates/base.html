@@ -31,6 +31,13 @@
                         <a class="nav-link" href="/tools/dkim-selectors">DKIM-Selektoren</a>
                     </li>
                 </ul>
+                {% if session.get('authenticated') %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Abmelden</a>
+                    </li>
+                </ul>
+                {% endif %}
             </div>
         </div>
     </nav>

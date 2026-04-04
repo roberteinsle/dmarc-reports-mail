@@ -1,6 +1,7 @@
 """
 Flask application factory for DMARC Reports Mail.
 """
+from datetime import timedelta
 from flask import Flask
 from app.config import get_config
 from app.models.database import db
@@ -32,6 +33,9 @@ def create_app(config_name=None):
         if not app.config.get('TESTING'):
             raise
 
+    # Session lifetime: 7 days
+    app.permanent_session_lifetime = timedelta(days=7)
+
     # Initialize extensions
     db.init_app(app)
 
@@ -43,7 +47,25 @@ def create_app(config_name=None):
 
     # Register blueprints
     from app.routes import dashboard
+    from app.auth import bp as auth_bp
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(auth_bp)
+
+    # Protect all dashboard routes with login_required
+    from app.auth import login_required
+
+    @app.before_request
+    def require_login():
+        from flask import request
+        # Allow auth routes, health check, and static files without login
+        allowed_prefixes = ('/auth/', '/health', '/static/')
+        if any(request.path.startswith(p) for p in allowed_prefixes):
+            return None
+        # Check authentication
+        from flask import session, redirect, url_for
+        if not session.get('authenticated'):
+            return redirect(url_for('auth.login', next=request.url))
+        return None
 
     # Error handlers
     @app.errorhandler(404)
