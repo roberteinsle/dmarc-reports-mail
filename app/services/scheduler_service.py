@@ -234,11 +234,15 @@ def process_dmarc_reports(app):
                                 db.session.add(alert)
                                 db.session.flush()
 
-                                # Send alert email
-                                if alert_service.send_alert_email(alert_data):
-                                    alert.email_sent = True
-                                    alert.email_sent_at = datetime.utcnow()
-                                    logger.info(f"Alert sent for report {report.report_id}")
+                                # Send alert email only for severity medium and above
+                                severity_order = {'low': 0, 'medium': 1, 'high': 2, 'critical': 3}
+                                if severity_order.get(alert_data['severity'], 0) >= severity_order['medium']:
+                                    if alert_service.send_alert_email(alert_data):
+                                        alert.email_sent = True
+                                        alert.email_sent_at = datetime.utcnow()
+                                        logger.info(f"Alert sent for report {report.report_id}")
+                                else:
+                                    logger.info(f"Alert severity '{alert_data['severity']}' below threshold, no email sent for report {report.report_id}")
                             else:
                                 logger.info(f"Alert throttled for report {report.report_id}")
                     else:

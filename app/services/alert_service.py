@@ -78,23 +78,15 @@ class AlertService:
                     'message': f"{count} email(s) failed DKIM check from {record.get('source_ip')}"
                 })
 
-        # Check Claude analysis for unauthorized sources and anomalies
-        if claude_analysis:
-            unauthorized = claude_analysis.get('unauthorized_sources', [])
-            if unauthorized:
-                alerts.append({
-                    'type': 'unauthorized_sender',
-                    'severity': 'high',
-                    'message': f"Unauthorized sending sources detected: {', '.join(str(s) for s in unauthorized[:3])}"
-                })
-
-            anomalies = claude_analysis.get('anomalies', [])
-            if anomalies:
+        # Check Claude analysis for spoofing attempts
+        if claude_analysis and not claude_analysis.get('no_action_required', False):
+            spoofing = claude_analysis.get('spoofing_attempts', [])
+            if spoofing:
                 severity = claude_analysis.get('severity', 'medium')
                 alerts.append({
-                    'type': 'suspicious_pattern',
+                    'type': 'spoofing_attempt',
                     'severity': severity,
-                    'message': f"Suspicious patterns detected: {anomalies[0] if anomalies else 'See details'}"
+                    'message': f"Spoofing-Versuche erkannt: {len(spoofing)} Quelle(n)"
                 })
 
         # Return alert data if any alerts triggered
@@ -183,10 +175,10 @@ class AlertService:
             """
 
         recommendations_html = ''
-        if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('recommendations'):
-            recommendations_html = '<h3>Empfehlungen:</h3><ul>'
-            for rec in alert_data['claude_analysis']['recommendations']:
-                recommendations_html += f'<li>{rec}</li>'
+        if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('action_items'):
+            recommendations_html = '<h3>Empfohlene Maßnahmen:</h3><ul>'
+            for item in alert_data['claude_analysis']['action_items']:
+                recommendations_html += f'<li><strong>{item.get("title", "")}</strong>: {item.get("description", "")}</li>'
             recommendations_html += '</ul>'
 
         html = f"""
@@ -243,10 +235,10 @@ Erkannte Probleme:
         for alert in alert_data.get('alerts', []):
             text += f"\n- {alert['type'].replace('_', ' ').title()}:\n  {alert['message']}\n"
 
-        if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('recommendations'):
-            text += "\nEmpfehlungen:\n"
-            for rec in alert_data['claude_analysis']['recommendations']:
-                text += f"- {rec}\n"
+        if alert_data.get('claude_analysis') and alert_data['claude_analysis'].get('action_items'):
+            text += "\nEmpfohlene Maßnahmen:\n"
+            for item in alert_data['claude_analysis']['action_items']:
+                text += f"- {item.get('title', '')}: {item.get('description', '')}\n"
 
         text += f"""
 ---

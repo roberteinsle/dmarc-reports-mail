@@ -107,7 +107,8 @@ Die Anwendung folgt diesem Ablauf alle 5 Minuten (orchestriert durch `scheduler_
 - Formatiert Analyse-Prompts mit Berichtsstatistiken
 - Ruft Claude API auf (Modell: claude-sonnet-4-5-20250929)
 - Implementiert Retry-Logik mit exponentiellem Backoff bei Rate-Limits
-- Gibt JSON zurück mit: summary, severity, failures, unauthorized_sources, anomalies, recommendations, action_items (mit priority/steps/expected_outcome), positive_findings, next_steps
+- Gibt JSON zurück mit: summary, severity, no_action_required, sources (IP→Dienst-Zuordnung), failures, spoofing_attempts (mit abuseipdb_worthy), action_items (priority/title/description/steps), positive_findings
+- Infrastruktur-Kontext (bekannte IPs/Dienste) ist fest im Prompt kodiert — bei Änderungen `_format_prompt()` aktualisieren
 - Analyse wird auf Deutsch angefordert
 
 **AlertService** (`alert_service.py`):

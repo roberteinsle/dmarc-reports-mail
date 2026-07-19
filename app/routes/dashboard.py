@@ -209,8 +209,9 @@ def dkim_selectors():
     """List all DKIM selectors seen in reports for a given domain."""
     domain = request.args.get('domain', '').strip().lower()
     results = []
+    _excluded_domains = {'einsle.help', 'einsle.io'}
     all_domains = db.session.query(Report.domain).distinct().order_by(Report.domain).all()
-    all_domains = [d[0] for d in all_domains]
+    all_domains = [d[0] for d in all_domains if d[0] not in _excluded_domains]
 
     if domain:
         # Query distinct selectors seen in records for this domain

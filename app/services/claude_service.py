@@ -39,7 +39,7 @@ class ClaudeService:
         for attempt in range(max_retries):
             try:
                 response = self.client.messages.create(
-                    model="claude-sonnet-4-5-20250929",
+                    model="claude-sonnet-4-6",
                     max_tokens=2000,
                     messages=[
                         {"role": "user", "content": prompt}
@@ -65,13 +65,12 @@ class ClaudeService:
                     analysis = {
                         'summary': analysis_text,
                         'severity': 'medium',
+                        'no_action_required': False,
+                        'sources': [],
                         'failures': [],
-                        'unauthorized_sources': [],
-                        'anomalies': [],
-                        'recommendations': [],
+                        'spoofing_attempts': [],
                         'action_items': [],
-                        'positive_findings': [],
-                        'next_steps': []
+                        'positive_findings': []
                     }
 
                 logger.info(f"Claude analysis completed for report {report_data.get('report_id')}")
@@ -129,57 +128,102 @@ class ClaudeService:
         if len(records_data) > 10:
             records_text += f"\n  ... and {len(records_data) - 10} more records"
 
-        prompt = f"""Du bist ein DMARC-Sicherheitsanalyst. Analysiere diesen DMARC-Bericht und gib detaillierte, umsetzbare Empfehlungen auf Deutsch.
+        prompt = f"""Du bist ein DMARC-Analyst für die E-Mail-Infrastruktur von Robert Einsle. Analysiere
+den folgenden DMARC-Aggregate-Report nüchtern und faktenbasiert auf Deutsch.
 
-Berichtzusammenfassung:
+## BEKANNTE INFRASTRUKTUR (Stand Juli 2026)
+
+Legitime Versandquellen (IP → Dienst):
+- 69.169.224.1/2/5/6 (b224-x.smtp-out.eu-central-1.amazonses.com) → AWS SES eu-central-1
+- 54.240.7.x (a7-x.smtp-out.eu-west-1.amazonses.com) → AWS SES eu-west-1
+- 2a01:111:f403:xxxx::x (*.outbound.protection.outlook.com) → Microsoft 365
+- 212.53.128.x (mailout*.artfiles.de), 2a00:1f78:af02:2::x (*.m.af.de) → Artfiles
+- 157.180.87.250, 2a01:4f9:c013:a752::1 (psrp.einsle.com) → Postal/Hetzner (nur einsle.com)
+- 144.76.2.16 (mail.einsle.cloud) → Mailcow (Mailserver für einsle.cloud)
+
+Domain → erwartete Dienste:
+- einsle.com: SES (beide Regionen), M365, Postal
+- einsle.cloud: SES eu-central-1, Mailcow (mail.einsle.cloud)
+- bodendesign.net: SES
+- dfliedelt-immobilien.com: SES, M365 (DKIM aligned seit Juli 2026)
+- liedelt.immo: SES, M365 (DKIM aligned seit Juli 2026)
+- dfliedelt-stiftung.de: Artfiles (DKIM aktiv seit Juli 2026)
+
+Alle Domains: DMARC p=reject, relaxed alignment (beabsichtigt, wegen Subdomain-MAIL-FROMs
+wie mg.liedelt.immo – KEINE Umstellung auf strict empfehlen).
+
+## ANALYSE-REGELN
+
+1. Der Report-SUBMITTER (Google, Microsoft, Aruba etc.) ist der EMPFÄNGER-Provider,
+   NIEMALS die Versandquelle. Ordne Versandquellen ausschließlich anhand der Source-IPs
+   der obigen Infrastruktur-Liste zu.
+2. SPF pass + DKIM pass → alles korrekt. Keine Maßnahmen erfinden.
+3. SPF fail + DKIM pass (aligned) → mit hoher Wahrscheinlichkeit Weiterleitung/Forwarding.
+   Das ist NORMALES Verhalten, kein Fehler. Keine SPF-Änderungen empfehlen.
+4. SPF pass + DKIM fail → prüfen: temperror (DNS-Problem beim Empfänger, keine Aktion)
+   oder Alignment-Problem (Signatur-Domain nennen).
+5. SPF fail + DKIM fail + IP unbekannt + disposition=reject → Spoofing-Versuch,
+   der korrekt blockiert wurde. Das ist ein ERFOLG der Policy. Severity dafür: low
+   (bei Einzelfall) bzw. medium (bei wiederholten Versuchen derselben IP = Kampagne).
+   IP, Reverse-DNS-Status und Zeitraum für einen möglichen AbuseIPDB-Report dokumentieren.
+6. SPF fail + DKIM fail + IP LEGITIM (aus obiger Liste) → Konfigurationsproblem,
+   severity mindestens medium, konkrete Ursache benennen.
+
+## SEVERITY-LOGIK (strikt anwenden)
+
+- low: alle Records pass, ODER nur Forwarding-Muster, ODER erfolgreich blockiertes
+  Einzel-Spoofing, ODER sporadische temperrors
+- medium: wiederholtes Spoofing derselben Quelle, ODER Konfigurationslücke ohne
+  Zustellungsausfall (z. B. fehlendes DKIM bei legitimer Quelle)
+- high: legitime E-Mails werden quarantined/rejected
+- critical: Hinweise auf kompromittierte legitime Infrastruktur
+
+## OUTPUT-REGELN
+
+- Wenn nichts zu tun ist: no_action_required=true setzen, action_items LEER lassen.
+  Erfinde keine generischen Empfehlungen (kein "Monitoring einrichten" – dieser Report
+  IST das Monitoring; kein BIMI, keine Schlüsselrotation, keine Baseline-Vorschläge).
+- action_items nur für konkrete, aus DIESEM Report ableitbare Probleme.
+- Mehrere Records derselben IP im selben Report sind normal (getrennte Zeitfenster),
+  keine Anomalie.
+- Gemischte IPv4/IPv6-Quellen sind bei Multi-Provider-Setup (SES + M365) erwartet.
+
+## REPORT-DATEN
+
 - Domain: {report_data.get('policy_domain', 'N/A')}
-- Absender: {report_data.get('org_name', 'N/A')}
+- Report-Submitter: {report_data.get('org_name', 'N/A')}
 - E-Mails gesamt: {total_emails}
 - SPF-Fehler: {spf_failures}
 - DKIM-Fehler: {dkim_failures}
 - Quarantäne: {quarantined}
 - Abgelehnt: {rejected}
-
-Datensätze (Top {min(10, len(records_data))} von {len(records_data)}):
-{records_text}
-
-Richtlinie:
 - DKIM-Alignment: {report_data.get('policy_adkim', 'N/A')}
 - SPF-Alignment: {report_data.get('policy_aspf', 'N/A')}
 - Policy: {report_data.get('policy_p', 'N/A')}
 
-Antworte auf Deutsch im JSON-Format mit folgender Struktur:
+Datensätze (Top {min(10, len(records_data))} von {len(records_data)}):
+{records_text}
+
+## JSON-RÜCKGABEFORMAT
+
 {{
-  "summary": "Kurze Zusammenfassung der Ergebnisse (2-3 Sätze)",
+  "summary": "1-3 Sätze: Was zeigt der Report faktisch?",
   "severity": "low|medium|high|critical",
-  "failures": ["Detaillierte Authentifizierungsfehler mit IP, Grund und Auswirkung"],
-  "unauthorized_sources": ["Nicht autorisierte IPs/Quellen mit Erklärung"],
-  "anomalies": ["Verdächtige Muster mit Kontext"],
-  "recommendations": ["Allgemeine Empfehlungen"],
-  "action_items": [
-    {{
-      "priority": "critical|high|medium|low",
-      "title": "Kurzer Handlungstitel",
-      "description": "Was zu tun ist und warum",
-      "steps": ["Schritt 1", "Schritt 2", "..."],
-      "affected_ips": ["Betroffene IP-Adressen falls zutreffend"],
-      "expected_outcome": "Erwartetes Ergebnis nach dieser Maßnahme"
-    }}
+  "no_action_required": true,
+  "sources": [
+    {{ "ip": "", "service": "SES eu-central-1|M365|Artfiles|Postal|Mailcow|UNBEKANNT",
+      "count": 0, "spf": "", "dkim": "", "disposition": "", "assessment": "" }}
   ],
-  "positive_findings": ["Was gut funktioniert - für ein ausgewogenes Feedback"],
-  "next_steps": ["Sofortige nächste Schritte nach Priorität"]
-}}
-
-**Wichtige Richtlinien:**
-1. Sei spezifisch - nenne genaue IPs, Anzahlen und Werte
-2. Priorisiere Handlungsempfehlungen: critical (sofortiger Handlungsbedarf), high (innerhalb 24h), medium (innerhalb einer Woche), low (beobachten)
-3. Gib konkrete Schritte an, keine vagen Vorschläge
-4. Erwähne auch positive Befunde, um anzuerkennen was gut funktioniert
-5. Nenne erwartete Ergebnisse für jede Maßnahme
-6. Auch wenn alles normal ist, gib Monitoring- und Best-Practice-Empfehlungen
-7. Berücksichtige den geschäftlichen Kontext - manche "Fehler" können erwartet sein (Weiterleitungen, Mailinglisten, etc.)
-
-Konzentriere dich auf umsetzbare Erkenntnisse, die ein Systemadministrator sofort umsetzen kann. Antworte komplett auf Deutsch."""
+  "failures": [ "nur ECHTE Fehler mit Ursache, Forwarding zählt nicht" ],
+  "spoofing_attempts": [
+    {{ "ip": "", "count": 0, "reverse_dns": "", "blocked": true,
+      "abuseipdb_worthy": false }}
+  ],
+  "action_items": [
+    {{ "priority": "", "title": "", "description": "", "steps": [] }}
+  ],
+  "positive_findings": [ "kurz, ohne Wiederholungen" ]
+}}"""
 
         return prompt
 
@@ -202,10 +246,10 @@ Konzentriere dich auf umsetzbare Erkenntnisse, die ein Systemadministrator sofor
 
         # Calculate based on findings
         failure_count = len(analysis.get('failures', []))
-        unauthorized_count = len(analysis.get('unauthorized_sources', []))
-        anomaly_count = len(analysis.get('anomalies', []))
+        spoofing_count = len(analysis.get('spoofing_attempts', []))
+        action_count = len(analysis.get('action_items', []))
 
-        total_issues = failure_count + unauthorized_count + anomaly_count
+        total_issues = failure_count + spoofing_count + action_count
 
         if total_issues == 0:
             return 'low'
