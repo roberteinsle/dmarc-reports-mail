@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Diese Datei bietet Orientierung für Claude Code (claude.ai/code) bei der Arbeit mit diesem Repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Projektübersicht
 
@@ -140,19 +140,17 @@ Die Anwendung folgt diesem Ablauf alle 5 Minuten (orchestriert durch `scheduler_
 - ANTHROPIC_API_KEY
 - SMTP_HOST, SMTP_USER, SMTP_PASSWORD
 - ALERT_RECIPIENT
-- AUTH_EMAIL
+- AUTH_USERNAME, AUTH_PASSWORD
 
 Alle Zugangsdaten über `.env`-Datei (Entwicklung) oder Docker ENV-Variablen (Produktion) - **NIEMALS hartcodiert**.
 
-### Authentifizierung (Magic Link)
+### Authentifizierung (Username/Passwort)
 
-Die App ist per Magic-Link-Authentifizierung geschützt (`app/auth.py`):
-- Benutzer gibt E-Mail ein → wenn sie mit `AUTH_EMAIL` übereinstimmt, wird ein Anmelde-Link per SMTP gesendet
-- Token wird mit `itsdangerous.URLSafeTimedSerializer` generiert (15 Min. gültig)
-- Nach Klick auf den Link wird eine Flask-Session erstellt (7 Tage gültig)
+Die App ist per Username/Passwort geschützt (`app/auth.py`):
+- Benutzer gibt Benutzernamen + Passwort ein → Vergleich mit `AUTH_USERNAME`/`AUTH_PASSWORD` via `hmac.compare_digest` (Timing-sicher)
+- Bei Erfolg wird eine Flask-Session erstellt (7 Tage gültig)
 - Alle Routen sind geschützt außer `/health`, `/auth/*` und `/static/`
 - `before_request`-Hook in `app/__init__.py` prüft die Session
-- Anti-Enumeration: Bei ungültiger E-Mail wird trotzdem "E-Mail prüfen" angezeigt
 
 ### Web-Dashboard
 
@@ -216,6 +214,7 @@ Die App ist per Magic-Link-Authentifizierung geschützt (`app/auth.py`):
 - **Kern-Services**: `app/services/{imap,parser,claude,alert,scheduler}_service.py`
 - **Routen**: `app/routes/dashboard.py`
 - **Templates**: `app/templates/*.html`
+- **Logging**: `app/utils/logger.py` — rotating file handler (logs/app.log + logs/error.log, je 10MB×5)
 - **Einstiegspunkt**: `run.py`
 - **Docker**: `docker/Dockerfile`, `docker/entrypoint.sh`, `docker-compose.yaml`
 - **Migrationen**: `migrations/env.py`, `alembic.ini`
@@ -276,6 +275,8 @@ except IntegrityError:
 
 **Datenbank**: In-Memory SQLite für Tests (TestingConfig) verwenden
 
+**Aktueller Stand**: Nur `tests/test_parser_service.py` existiert. Tests für IMAP, Claude und Alert-Service fehlen noch.
+
 **Wichtige Testbereiche**:
 - Parser: Gültiges/ungültiges XML, fehlende Felder, fehlerhafte Daten
 - IMAP: Verbindungshandling, Anhang-Extraktion, Dekomprimierung
@@ -318,17 +319,6 @@ except IntegrityError:
 6. **Container stürzt ab**: Health-Endpunkt, Ressourcenlimits, Logs prüfen
 7. **Coolify-Deployment-Probleme**: Coolify-Deployment-Logs, Umgebungsvariablen und Volume-Mounts prüfen
 8. **Domain nicht erreichbar**: Domain/Port-Konfiguration in Coolify und Traefik-Proxy-Status prüfen
-
-## Ideen für zukünftige Erweiterungen
-
-- Multi-Domain-Unterstützung (aktuell einzelne Domain)
-- Fortgeschrittene ML-basierte Anomalieerkennung
-- Slack/Discord-Webhook-Integrationen
-- RESTful API für externe Integrationen
-- Benutzerauthentifizierung für Dashboard
-- Berichte als CSV/JSON exportieren
-- Absender-Reputationsbewertung
-- Historische Trendanalyse
 
 ---
 
